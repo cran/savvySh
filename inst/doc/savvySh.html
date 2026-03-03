@@ -1,0 +1,2361 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>savvySh: Shrinkage Methods for Linear Regression Estimation</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">savvySh: Shrinkage Methods for Linear
+Regression Estimation</h1>
+
+
+
+<div id="introduction" class="section level1">
+<h1>Introduction</h1>
+<p><code>savvySh</code> is an R package that implements a suite of
+shrinkage estimators for multivariate linear regression. The motivation
+for shrinkage estimation originates from Stein’s paradox, which shows
+that it is possible to improve on the classical <em>Ordinary Least
+Squares (OLS)</em> estimator when estimating multiple parameters
+simultaneously. This improvement is achieved by introducing structured
+bias that reduces variance, yielding estimators with smaller overall
+<em>Mean Squared Error (MSE)</em>.</p>
+<p>The <code>savvySh</code> package provides a unified interface to four
+shrinkage strategies, each designed to improve prediction accuracy and
+estimation stability in finite samples. These methods do not require
+cross-validation or tuning parameter selection, with the exception of
+the <em>Shrinkage Ridge Regression (SRR)</em>, for which the shrinkage
+intensity is chosen by minimizing an explicit MSE criterion.</p>
+<p>The package is particularly suited for high-dimensional settings or
+cases where the design matrix exhibits near multicollinearity. Empirical
+results in both simulation and real data settings show that at least one
+of the shrinkage estimators consistently performs as well as or better
+than OLS, and in many cases leads to substantial improvements,
+especially when applied to generalized linear models.</p>
+<p>For more details, please see:</p>
+<p>Asimit, V., Cidota, M. A., Chen, Z., &amp; Asimit, J. (2025). <a href="https://openaccess.city.ac.uk/id/eprint/35005/">Slab and Shrinkage
+Linear Regression Estimation</a></p>
+<p><strong>Main features</strong>: <code>savvySh</code> provides four
+classes of shrinkage estimators for linear regression:</p>
+<ul>
+<li><p><a href="#multiplicative-shrinkage">Multiplicative Shrinkage:</a>
+Modifies OLS estimates by applying data-driven multiplicative factors.
+This includes the <em>Stein estimator (St)</em>, <em>Diagonal Shrinkage
+(DSh)</em>, and the more general <em>Shrinkage estimator (Sh)</em> that
+solves a <em>Sylvester equation</em>.</p></li>
+<li><p><a href="#slab-regression">Slab Regression:</a> Adds a quadratic
+penalty to shrink the coefficients in specific directions. The
+<em>Simple Slab Regression (SR)</em> penalizes along a fixed direction,
+and the <em>Generalized Slab Regression (GSR)</em> allows penalties
+along multiple directions, typically aligned with the data
+structure.</p></li>
+<li><p><a href="#linear-shrinkage">Linear Shrinkage:</a> Combines the
+OLS estimator (through the origin) with a target that assumes
+uncorrelated covariates. This method is designed for standardized data
+and avoids estimating the intercept.</p></li>
+<li><p><a href="#shrinkage-ridge-regression">Shrinkage Ridge
+Regression:</a> Improves on <em>Ridge Regression (RR)</em> by shrinking
+toward a diagonal matrix with equal entries, balancing the sample
+structure with a stable target.</p></li>
+</ul>
+<p><strong>Inputs</strong>: The primary inputs to <code>savvySh</code>
+are similar to those of a regression function:</p>
+<ul>
+<li><p><code>x</code>: The design matrix (predictor matrix) of dimension
+<span class="math inline">\(n\times p\)</span>.</p></li>
+<li><p><code>y</code>: The response vector of length <span class="math inline">\(n\)</span>.</p></li>
+<li><p><code>model_class</code>: The shrinkage method to use (one of
+<code>&quot;Multiplicative&quot;</code>, <code>&quot;Slab&quot;</code>,
+<code>&quot;Linear&quot;</code>, or <code>&quot;ShrinkageRR&quot;</code>).</p></li>
+<li><p>Additional method-specific parameters (e.g., include
+<code>Sh</code>or not), with sensible defaults or automatic selection if
+not provided.</p></li>
+</ul>
+<p><strong>Output</strong>: The output of <code>savvySh</code> is a list
+containing several elements:</p>
+<ul>
+<li><p><code>call</code>: the original function call.</p></li>
+<li><p><code>model</code>: The data frame of <code>y</code> and
+<code>x</code> used in the analysis.</p></li>
+<li><p><code>optimal_lambda</code>: the penalty parameter used (if
+applicable).</p></li>
+<li><p><code>model_class</code>: the shrinkage method used
+(e.g.,<code>&quot;Multiplicative&quot;</code>, <code>&quot;Slab&quot;</code>,
+<code>&quot;Linear&quot;</code>, or <code>&quot;ShrinkageRR&quot;</code>).</p></li>
+<li><p><code>coefficients</code>: A list of estimated coefficients for
+each applicable estimator for chosen <code>model_class</code>.</p></li>
+<li><p>Additional method-specific diagnostics (e.g., fitted values and
+predicted MSE).</p></li>
+</ul>
+<p>This vignette provides an overview of the methods implemented in
+<code>savvySh</code> and demonstrates how to use them on <a href="#simulation-examples">simulated data</a> and <a href="#real-data-analysis">real data</a>. We begin with a theoretical
+overview of each shrinkage class, then walk through simulation examples
+that illustrate how to apply <code>savvySh</code> for each method.</p>
+<hr />
+</div>
+<div id="theoretical-overview" class="section level1">
+<h1>Theoretical Overview</h1>
+<p>The <code>savvySh</code> function encompasses four shrinkage
+strategies for linear regression. All these methods aim to improve
+predictive accuracy and interpretability by trading a small amount of
+bias for a larger reduction in variance. Below we briefly summarize the
+theoretical background of each method.</p>
+<p>Consider a response vector <span class="math inline">\(\mathbf{y} \in
+\Re^n\)</span> and a predictor matrix <span class="math inline">\(\mathbf{X} \in \Re^{n \times (p+1)}\)</span>. Let
+<span class="math inline">\(\widehat{\boldsymbol{\beta}}^{\text{OLS}}\)</span>
+be the OLS estimator of the coefficient vector, and <span class="math inline">\(\Sigma = \mathbf{X}^\top \mathbf{X}\)</span> the
+Gram matrix of the design.</p>
+<div id="multiplicative-shrinkage" class="section level2">
+<h2>Multiplicative Shrinkage</h2>
+<p>This class of estimators modifies the OLS solution by multiplying it
+with a matrix <span class="math inline">\(\mathbf{D}\)</span>, yielding
+the form <span class="math inline">\(\widehat{\boldsymbol{\beta}} =
+\mathbf{D} \widehat{\boldsymbol{\beta}}^{OLS}\)</span>. The goal is to
+choose <span class="math inline">\(\mathbf{D}\)</span> to minimize the
+MSE of the resulting estimator. While earlier work such as <a href="https://www.jstor.org/stable/1268658">Hocking et al. (1976)</a>
+focused on the case where the design matrix is in canonical form
+(orthonormal), our framework generalizes these results to arbitrary
+design matrices without requiring that assumption. Common choices for
+<span class="math inline">\(\mathbf{D}\)</span> include:</p>
+<ol style="list-style-type: decimal">
+<li><strong>Stein Estimator (St):</strong> The St estimator shrinks all
+coefficients uniformly by a single factor <span class="math inline">\(\widehat{a^*}\)</span>:</li>
+</ol>
+<p><span class="math display">\[
+\widehat{\boldsymbol{\beta}}^{\text{St}} = \widehat{a^*}
+\widehat{\boldsymbol{\beta}}^{\text{OLS}}, \quad \text{where} \quad
+\widehat{a^*} =
+\frac{\left(\widehat{\boldsymbol\beta}^{OLS}\right)^T\widehat{\boldsymbol\beta}^{OLS}}{\left(\widehat{\boldsymbol\beta}^{OLS}\right)^T\widehat{\boldsymbol\beta}^{OLS}
++
+\widehat{\text{MSE}\left(\widehat{\boldsymbol{\beta}}^{\text{OLS}}\right)}}.
+\]</span></p>
+<p>This corresponds to <span class="math inline">\(\mathbf{D} = a
+\mathbf{I}_{p+1}\)</span>. It reduces variance by scaling all
+coefficients equally.</p>
+<ol start="2" style="list-style-type: decimal">
+<li><strong>Diagonal Shrinkage Estimator (DSh):</strong> Extending the
+St estimator, DSh applies a separate shrinkage factor <span class="math inline">\(\widehat{b_k^*}\)</span> to each coefficient:</li>
+</ol>
+<p><span class="math display">\[
+\widehat{\boldsymbol{\beta}}^{\text{DSh}} =
+\text{diag}\left(\widehat{\mathbf{b^*}}\right), \quad
+\text{where} \quad
+\widehat{b_k^*} =
+\frac{\left(\widehat{\beta}_k^{\text{OLS}}\right)^2}{\left(\widehat{\beta}_k^{\text{OLS}}\right)^2
++ \widehat{\sigma^2} \sigma_k}.
+\]</span></p>
+<p>This corresponds to <span class="math inline">\(\mathbf{D} =
+\text{diag}\left(\mathbf{b}\right)\)</span> and <span class="math inline">\(\sigma_k\)</span> is the <span class="math inline">\(k^{\text{th}}\)</span> diagonal entry of <span class="math inline">\(\Sigma^{-1}\)</span> and <span class="math inline">\(\widehat{\sigma^2}\)</span> is the estimated
+residual variance.</p>
+<ol start="3" style="list-style-type: decimal">
+<li><strong>Shrinkage Estimator (Sh):</strong> The Sh estimator is the
+most general form in the multiplicative shrinkage family. It applies a
+full (non-diagonal) matrix <span class="math inline">\(\widehat{\mathbf{C}^*}\)</span> to the OLS
+estimate and requires solving a <em>Sylvester equation</em>:</li>
+</ol>
+<p><span class="math display">\[
+\widehat{\boldsymbol{\beta}}^{\text{Sh}} = \widehat{\mathbf{C}^*}
+\widehat{\boldsymbol{\beta}}^{\text{OLS}}, \quad \text{where }
+\widehat{\mathbf{C}^*} \text{ solves the Sylvester equation:} \
+\Sigma^{-1} \mathbf{C} + \mathbf{C}
+\widehat{\boldsymbol{\beta}}^{\text{OLS}}
+\left(\widehat{\boldsymbol{\beta}}^{\text{OLS}}\right)^T =
+\widehat{\boldsymbol{\beta}}^{\text{OLS}}
+\left(\widehat{\boldsymbol{\beta}}^{\text{OLS}}\right)^T.
+\]</span></p>
+<p>This corresponds to <span class="math inline">\(\mathbf{D} =
+\text{diag}\left(\mathbf{C}\right)\)</span>. Unlike St and DSh, the Sh
+estimator allows interactions across coefficients through off-diagonal
+entries in <span class="math inline">\(\widehat{\mathbf{C}^*}\)</span>,
+capturing richer shrinkage structures.</p>
+</div>
+<div id="slab-regression" class="section level2">
+<h2>Slab Regression</h2>
+<p>Slab regression introduces a structured quadratic penalty that
+shrinks the regression coefficients in specified directions. It is
+closely related to the <em>Generalized LASSO</em> estimator introduced
+by <a href="https://www.jstor.org/stable/23033600">Tibshirani and Taylor
+(2011)</a>, but with key differences. Unlike the Generalized LASSO, slab
+regression does not aim for variable selection or sparsity, and it
+avoids cross-validation by selecting shrinkage levels through
+theoretical MSE criteria. These penalties are based on projection
+constraints that can be fixed (e.g., constant direction <span class="math inline">\(\mathbf{u} = \mathbf{1}\)</span>) or structured
+(e.g., eigenvectors of <span class="math inline">\(\Sigma\)</span>).
+This leads to two main estimators.</p>
+<ol style="list-style-type: decimal">
+<li><strong>(Simple) Slab Regression (SR):</strong> The SR estimator
+applies a single penalty along a fixed direction vector <span class="math inline">\(\mathbf{u} \in \Re^{p+1}\)</span>. A common choice
+is <span class="math inline">\(\mathbf{u} = \mathbf{1}\)</span>. The
+estimator is given by:</li>
+</ol>
+<p><span class="math display">\[
+\widehat{\boldsymbol{\beta}}^{SR}\left(\mu;\textbf{u}\right) :=
+\arg\min_{\boldsymbol{\beta}\in\Re^{p+1}} \left( \sum_{i=1}^n \big(y_i -
+\mathbf{x}_i^\top \boldsymbol{\beta}\big)^2 + \mu \big(\mathbf{u}^\top
+\boldsymbol{\beta}\big)^2 \right),
+\]</span></p>
+<p>where <span class="math inline">\(\mu \geq 0\)</span> is the penalty
+parameter controls the amount of shrinkage along <span class="math inline">\(\mathbf{u}\)</span> and has a closed-form, chosen
+analytically to minimize MSE under the slab constraint <span class="math inline">\((\boldsymbol{\beta}^\top
+\mathbf{u})^2\)</span>.</p>
+<ol start="2" style="list-style-type: decimal">
+<li><strong>Generalized Slab Regression (GSR):</strong> The GSR
+estimator extends SR by allowing shrinkage in multiple directions. These
+directions are typically chosen as eigenvectors of <span class="math inline">\(\Sigma\)</span>. The estimator is:</li>
+</ol>
+<p><span class="math display">\[
+\widehat{\boldsymbol{\beta}}^{GSR}(\boldsymbol{\mu}) :=
+\arg\min_{\boldsymbol{\beta} \in \Re^{p+1}}
+\left(\sum_{i=1}^n \big(y_i - \mathbf{x}_i^\top
+\boldsymbol{\beta}\big)^2 + \sum_{l \in \mathcal{L}} \mu_l
+\big(\mathbf{u}_l^\top \boldsymbol{\beta}\big)^2 \right),
+\]</span></p>
+<p>where each <span class="math inline">\(\mu_l \geq 0\)</span> controls
+the strength of shrinkage along <span class="math inline">\(\mathbf{u}_l\)</span>, and the set <span class="math inline">\(\mathcal{L}\)</span> indexes the selected
+directions. A special case arises when the <span class="math inline">\(\mathbf{u}_l\)</span> form the standard basis
+vectors, recovering the classical <em>Generalized RR</em> of <a href="https://www.jstor.org/stable/1271436">Hoerl and Kennard
+(1970)</a>.</p>
+</div>
+<div id="linear-shrinkage" class="section level2">
+<h2>Linear Shrinkage</h2>
+<p>The LSh estimator combines the OLS estimator (computed through the
+origin) with a target estimator that assumes uncorrelated covariates
+(<span class="math inline">\(\widetilde{\Sigma} =
+\mathrm{diag}(\Sigma)\)</span>). This target estimator is given by <span class="math inline">\(\widehat{\boldsymbol{\beta}}^{ind} =
+\widetilde{\Sigma}^{-1}\mathbf{X}^T\mathbf{y}\)</span>. The method
+assumes that the data are standardized (zero mean and unit variance) so
+that the intercept is not needed. The LSh estimator is defined as:</p>
+<p><span class="math display">\[
+\widehat{\boldsymbol{\beta}}^{ind}(\rho):=(1-\rho)\widehat{\widehat{\boldsymbol{\beta}\,}}^{OLS}+\rho
+\widehat{\boldsymbol{\beta}}^{ind}=\left(\rho\widetilde{\Sigma}^{-1}\Sigma
++
+(1-\rho)\textbf{I}_p\right)\widehat{\widehat{\boldsymbol{\beta}\,}}^{OLS}:=\Sigma(\rho)\widehat{\widehat{\boldsymbol{\beta}\,}}^{OLS},
+\]</span></p>
+<p>where <span class="math inline">\(\widehat{\widehat{\boldsymbol{\beta}}}^{OLS}\)</span>
+is the OLS estimator without intercept, and <span class="math inline">\(\rho\)</span> is the shrinkage intensity chosen to
+improve stability and reduce MSE.</p>
+</div>
+<div id="shrinkage-ridge-regression" class="section level2">
+<h2>Shrinkage Ridge Regression</h2>
+<p>The SRR estimator improves upon standard RR by shrinking the <span class="math inline">\(\Sigma\)</span> toward a diagonal matrix with
+equal entries. Specifically, it shrinks toward <span class="math inline">\(v \mathbf{I}_{p+1}\)</span>, where <span class="math inline">\(v = \frac{1}{p+1} \mathrm{Tr}(\Sigma)\)</span> is
+the average variance across all covariates and the intercept. The SRR
+estimator is given by:</p>
+<p><span class="math display">\[
+\widehat{\boldsymbol{\beta}}^{SRR}(\rho)=\big(\Sigma^*(\rho)\big)^{-1}\textbf{X}^T\textbf{y}
+\quad \text{with} \quad \Sigma^*(\rho)=(1-\rho)\Sigma+\rho v
+\textbf{I}_{p+1}.
+\]</span></p>
+<p>Unlike the approach in <a href="https://doi.org/10.1016/S0047-259X(03)00096-4">Ledoit and Wolf
+(2004)</a>, which minimizes the MSE of the covariance matrix, SRR
+chooses the optimal <span class="math inline">\(\rho^*\)</span> by
+directly minimizing the MSE of the coefficient estimator. Although <span class="math inline">\(\rho^*\)</span> does not have a closed form, it
+can be selected numerically. This approach is especially useful when the
+design matrix has a low-rank or unstable covariance structure, as often
+encountered in high-dimensional or collinear settings.</p>
+</div>
+<div id="summary-of-shrinkage-estimators" class="section level2">
+<h2>Summary of Shrinkage Estimators</h2>
+<table style="width:100%;">
+<colgroup>
+<col width="16%" />
+<col width="16%" />
+<col width="16%" />
+<col width="16%" />
+<col width="16%" />
+<col width="16%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Method</th>
+<th>Shrinkage Direction</th>
+<th>Shrinkage Form</th>
+<th>Assumes Standardized Data?</th>
+<th>Tuning or Optimizing Required?</th>
+<th>Handles Multicollinearity?</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>OLS</strong></td>
+<td>None</td>
+<td>No shrinkage</td>
+<td>No</td>
+<td>No</td>
+<td>No</td>
+</tr>
+<tr class="even">
+<td><strong>RR</strong></td>
+<td>Toward origin</td>
+<td><span class="math inline">\(\left(\mathbf{X}^\top\mathbf{X} +
+\lambda I\right)^{-1} \mathbf{X}^\top \mathbf{y}\)</span></td>
+<td>No</td>
+<td><strong>Yes</strong> (cross-validation)</td>
+<td><strong>Yes</strong></td>
+</tr>
+<tr class="odd">
+<td><strong>St</strong></td>
+<td>Global (scalar)</td>
+<td><span class="math inline">\(\widehat{a^*} \cdot
+\widehat{\beta}^{\text{OLS}}\)</span></td>
+<td>No</td>
+<td>No</td>
+<td>No</td>
+</tr>
+<tr class="even">
+<td><strong>DSh</strong></td>
+<td>Coordinate-wise (diagonal)</td>
+<td><span class="math inline">\(\text{diag}\left(\widehat{\mathbf{b^*}}\right)
+\cdot \widehat{\beta}^{\text{OLS}}\)</span></td>
+<td>No</td>
+<td>No</td>
+<td>No</td>
+</tr>
+<tr class="odd">
+<td><strong>Sh</strong></td>
+<td>Matrix shrinkage (non-diagonal)</td>
+<td><span class="math inline">\(\widehat{\mathbf{C}^*} \cdot
+\widehat{\beta}^{\text{OLS}}\)</span></td>
+<td>No</td>
+<td>No</td>
+<td>No</td>
+</tr>
+<tr class="even">
+<td><strong>SR</strong></td>
+<td>Fixed direction (e.g., <span class="math inline">\(\mathbf{1}\)</span>)</td>
+<td>Penalized projection</td>
+<td>No</td>
+<td>No</td>
+<td>No</td>
+</tr>
+<tr class="odd">
+<td><strong>GSR</strong></td>
+<td>Multiple directions (eigenvectors)</td>
+<td>Penalized projection</td>
+<td>No</td>
+<td>No</td>
+<td>No</td>
+</tr>
+<tr class="even">
+<td><strong>LSh</strong></td>
+<td>Toward diagonal target</td>
+<td>Convex combination</td>
+<td><strong>Yes</strong></td>
+<td>No</td>
+<td>No</td>
+</tr>
+<tr class="odd">
+<td><strong>SRR</strong></td>
+<td>Toward scaled identity</td>
+<td>Modified Ridge</td>
+<td>No</td>
+<td><strong>Yes</strong> (numerical minimization)</td>
+<td><strong>Yes</strong></td>
+</tr>
+</tbody>
+</table>
+<hr />
+</div>
+</div>
+<div id="simulation-examples" class="section level1">
+<h1>Simulation Examples</h1>
+<p>This section presents a set of simulation studies that demonstrate
+the performance of shrinkage estimators implemented in
+<code>savvySh</code>. We compare them against OLS using synthetic
+datasets. The performance metric is the <span class="math inline">\(L_2\)</span> distance between the estimated
+coefficients and the true parameter vector. Lower <span class="math inline">\(L_2\)</span> values indicate better recovery of
+the true coefficients.</p>
+<p>We explore several generative scenarios based on the design matrix
+and error distribution. The structure of the design matrix includes
+different forms of correlation and dependence. Each simulation is
+followed by a table comparing <span class="math inline">\(L_2\)</span>
+distances and estimated coefficients.</p>
+<p>The following <em>data-generating processes (DGPs)</em> are
+considered:</p>
+<ul>
+<li><p><a href="#multivariate-gaussian-distribution">Multivariate
+Gaussian distributed covariates with Toeplitz covariance matrix</a> -
+<span class="math inline">\(N(\pmb{\mu}, \pmb{\Psi}(\rho))\)</span>
+where <span class="math inline">\(\pmb{\Psi}_{st}(\rho) =
+\rho^{|s-t|}\)</span> for all <span class="math inline">\(1 \leq s, t
+\leq p\)</span>, Here, <span class="math inline">\(\pmb{\mu} = (\mu_1,
+\mu_2, \ldots, \mu_p)^T\)</span> is the mean vector, <span class="math inline">\(\pmb{\Psi}(\rho)\)</span> is the covariance
+matrix, and <span class="math inline">\(\rho\)</span> represents the
+correlation coefficient that controls the dependence between covariates.
+The response is generated using normal noise.</p></li>
+<li><p><a href="#students-t-distribution">Student’s <span class="math inline">\(t\)</span> distributed Multivariate Gaussian
+distributed covariates with Toeplitz covariance matrix</a> - <span class="math inline">\(N(\pmb{\mu}, \pmb{\Psi}(\rho))\)</span> where
+<span class="math inline">\(\pmb{\Psi}_{st}(\rho) =
+\rho^{|s-t|}\)</span> for all <span class="math inline">\(1 \leq s, t
+\leq p\)</span>. Here, <span class="math inline">\(\pmb{\mu} = (\mu_1,
+\mu_2, \ldots, \mu_p)^T\)</span> is the mean vector, <span class="math inline">\(\pmb{\Psi}(\rho)\)</span> is the covariance
+matrix, and <span class="math inline">\(\rho\)</span> represents the
+correlation coefficient that controls the dependence between covariates.
+The response includes heavier-tailed variation.</p></li>
+<li><p><a href="#gaussian-copula-with-binomial-margins">Multivariate
+Gaussian Copula with Binomial marginal distributed covariates and
+Toeplitz covariance matrix</a> - <span class="math inline">\(\textbf{Z}_i\sim N(\textbf{0},
+\Psi(\rho))\)</span> with <span class="math inline">\(X_{ik} =
+F^{-1}(\Phi(Z_{ik}))\)</span>, for <span class="math inline">\(1 \leq k
+\leq p\)</span> where <span class="math inline">\(\Phi\)</span> is the
+<em>cumulative distribution function (CDF)</em> of <span class="math inline">\(N(0,1)\)</span>, and <span class="math inline">\(F^{-1}\)</span> is the inverse CDF of the binomial
+distribution.</p></li>
+<li><p><a href="#latent-space-features">Latent Space Features</a> -
+Covariates are generated by combining a low-rank structure with random
+variations, Specifically, we simulate <span class="math inline">\(\mathbf{X} = \mathbf{A} \mathbf{Z} +
+\mathbf{E}\)</span>, where <span class="math inline">\(\mathbf{A}\)</span> is an <span class="math inline">\(n \times f\)</span> matrix of factor loadings with
+entries drawn independently from a standard normal distribution <span class="math inline">\(N(0,1)\)</span>, and <span class="math inline">\(\mathbf{Z}\)</span> is an <span class="math inline">\(f \times p\)</span> matrix of latent factors, also
+with entries drawn independently from <span class="math inline">\(N(0,1)\)</span>. The term <span class="math inline">\(\mathbf{E}\)</span> is an <span class="math inline">\(n \times p\)</span> matrix of independent Gaussian
+noise with variance <span class="math inline">\(10^{-6}\)</span>, i.e.,
+<span class="math inline">\(N(0,10^{-6})\)</span>.</p></li>
+</ul>
+<p>In all four settings, the true regression coefficient vector
+alternates in sign with increasing magnitude, making it possible to
+assess the shrinkage effect across varying coefficient scales.</p>
+<p><strong>Note:</strong> Due to differences in underlying libraries and
+random number generation implementations (e.g., BLAS/LAPACK and RNG
+behavior), the data generated by functions like <code>mvrnorm</code> may
+differ slightly between Windows and macOS/Linux, even with the same
+seed.</p>
+<div id="multiplicative-shrinkage-and-slab-regression" class="section level2">
+<h2>Multiplicative Shrinkage and Slab Regression</h2>
+<p>This section shows how <code>savvySh</code> implements multiplicative
+shrinkage including St, DSh, and Sh; Slab Shrinkage including SR and
+GSR. Each method is compared to OLS.</p>
+<div id="multivariate-gaussian-distribution" class="section level3">
+<h3>Multivariate Gaussian Distribution</h3>
+<p>This example corresponds to the <a href="#multivariate-gaussian-distribution">Multivariate Gaussian
+distributed covariates with Toeplitz covariance matrix</a> setup
+described above. We simulate a design matrix from a multivariate normal
+distribution with a Toeplitz covariance matrix. The response is
+generated with Gaussian noise with variance <span class="math inline">\(\sigma^2 = 25\)</span>.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="co"># Load packages</span></span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">library</span>(savvySh)</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="fu">library</span>(MASS)</span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="fu">library</span>(knitr)</span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a><span class="co"># Parameters</span></span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">123</span>)</span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a>n_val <span class="ot">&lt;-</span> <span class="dv">1000</span></span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a>p_val <span class="ot">&lt;-</span> <span class="dv">10</span></span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a>rho_val <span class="ot">&lt;-</span> <span class="fl">0.75</span></span>
+<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a>sigma_val <span class="ot">&lt;-</span> <span class="dv">5</span></span>
+<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a>mu_val <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a></span>
+<span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a><span class="co"># Correlation matrix</span></span>
+<span id="cb1-15"><a href="#cb1-15" tabindex="-1"></a>sigma.rho <span class="ot">&lt;-</span> <span class="cf">function</span>(rho_val, p_val) {</span>
+<span id="cb1-16"><a href="#cb1-16" tabindex="-1"></a>  rho_val <span class="sc">^</span> <span class="fu">abs</span>(<span class="fu">outer</span>(<span class="dv">1</span><span class="sc">:</span>p_val, <span class="dv">1</span><span class="sc">:</span>p_val, <span class="st">&quot;-&quot;</span>))</span>
+<span id="cb1-17"><a href="#cb1-17" tabindex="-1"></a>}</span>
+<span id="cb1-18"><a href="#cb1-18" tabindex="-1"></a></span>
+<span id="cb1-19"><a href="#cb1-19" tabindex="-1"></a><span class="co"># True beta</span></span>
+<span id="cb1-20"><a href="#cb1-20" tabindex="-1"></a>theta_func <span class="ot">&lt;-</span> <span class="cf">function</span>(p_val) {</span>
+<span id="cb1-21"><a href="#cb1-21" tabindex="-1"></a>  sgn <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="sc">-</span><span class="dv">1</span>), <span class="at">length.out =</span> p_val)</span>
+<span id="cb1-22"><a href="#cb1-22" tabindex="-1"></a>  mag <span class="ot">&lt;-</span> <span class="fu">ceiling</span>(<span class="fu">seq_len</span>(p_val) <span class="sc">/</span> <span class="dv">2</span>)</span>
+<span id="cb1-23"><a href="#cb1-23" tabindex="-1"></a>  sgn <span class="sc">*</span> mag</span>
+<span id="cb1-24"><a href="#cb1-24" tabindex="-1"></a>}</span>
+<span id="cb1-25"><a href="#cb1-25" tabindex="-1"></a></span>
+<span id="cb1-26"><a href="#cb1-26" tabindex="-1"></a><span class="co"># Simulate data</span></span>
+<span id="cb1-27"><a href="#cb1-27" tabindex="-1"></a>Sigma <span class="ot">&lt;-</span> <span class="fu">sigma.rho</span>(rho_val, p_val)</span>
+<span id="cb1-28"><a href="#cb1-28" tabindex="-1"></a>X <span class="ot">&lt;-</span> <span class="fu">mvrnorm</span>(n_val, <span class="at">mu =</span> <span class="fu">rep</span>(mu_val, p_val), <span class="at">Sigma =</span> Sigma)</span>
+<span id="cb1-29"><a href="#cb1-29" tabindex="-1"></a>X_intercept <span class="ot">&lt;-</span> <span class="fu">cbind</span>(<span class="dv">1</span>, X)</span>
+<span id="cb1-30"><a href="#cb1-30" tabindex="-1"></a>beta_true <span class="ot">&lt;-</span> <span class="fu">theta_func</span>(p_val <span class="sc">+</span> <span class="dv">1</span>)</span>
+<span id="cb1-31"><a href="#cb1-31" tabindex="-1"></a>y <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(n_val, <span class="at">mean =</span> X_intercept <span class="sc">%*%</span> beta_true, <span class="at">sd =</span> sigma_val)</span>
+<span id="cb1-32"><a href="#cb1-32" tabindex="-1"></a></span>
+<span id="cb1-33"><a href="#cb1-33" tabindex="-1"></a><span class="co"># Fit models</span></span>
+<span id="cb1-34"><a href="#cb1-34" tabindex="-1"></a>ols_fit <span class="ot">&lt;-</span> <span class="fu">lm</span>(y <span class="sc">~</span> X)</span>
+<span id="cb1-35"><a href="#cb1-35" tabindex="-1"></a>beta_ols <span class="ot">&lt;-</span> <span class="fu">coef</span>(ols_fit)</span>
+<span id="cb1-36"><a href="#cb1-36" tabindex="-1"></a></span>
+<span id="cb1-37"><a href="#cb1-37" tabindex="-1"></a>multi_results <span class="ot">&lt;-</span> <span class="fu">savvySh</span>(X, y, <span class="at">model_class =</span> <span class="st">&quot;Multiplicative&quot;</span>, <span class="at">include_Sh =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb1-38"><a href="#cb1-38" tabindex="-1"></a>beta_St  <span class="ot">&lt;-</span> <span class="fu">coef</span>(multi_results, <span class="st">&quot;St&quot;</span>)</span>
+<span id="cb1-39"><a href="#cb1-39" tabindex="-1"></a>beta_DSh <span class="ot">&lt;-</span> <span class="fu">coef</span>(multi_results, <span class="st">&quot;DSh&quot;</span>)</span>
+<span id="cb1-40"><a href="#cb1-40" tabindex="-1"></a>beta_Sh  <span class="ot">&lt;-</span> <span class="fu">coef</span>(multi_results, <span class="st">&quot;Sh&quot;</span>)</span>
+<span id="cb1-41"><a href="#cb1-41" tabindex="-1"></a></span>
+<span id="cb1-42"><a href="#cb1-42" tabindex="-1"></a>slab_results <span class="ot">&lt;-</span> <span class="fu">savvySh</span>(X, y, <span class="at">model_class =</span> <span class="st">&quot;Slab&quot;</span>)</span>
+<span id="cb1-43"><a href="#cb1-43" tabindex="-1"></a>beta_SR  <span class="ot">&lt;-</span> <span class="fu">coef</span>(slab_results, <span class="st">&quot;SR&quot;</span>)</span>
+<span id="cb1-44"><a href="#cb1-44" tabindex="-1"></a>beta_GSR <span class="ot">&lt;-</span> <span class="fu">coef</span>(slab_results, <span class="st">&quot;GSR&quot;</span>)</span></code></pre></div>
+<p>The tables below report the results of each estimator: the first
+table shows the <span class="math inline">\(L_2\)</span> distance
+between the estimated coefficient vector and the ground truth, while the
+second table displays the actual estimated coefficients (rounded) for
+each method alongside the true values.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="co"># L2 comparison</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>l2_table <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>  <span class="at">Method =</span> <span class="fu">c</span>(<span class="st">&quot;OLS&quot;</span>, <span class="st">&quot;St&quot;</span>, <span class="st">&quot;DSh&quot;</span>, <span class="st">&quot;Sh&quot;</span>, <span class="st">&quot;SR&quot;</span>, <span class="st">&quot;GSR&quot;</span>),</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>  <span class="at">L2_Distance =</span> <span class="fu">c</span>(</span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>    <span class="fu">sqrt</span>(<span class="fu">sum</span>((beta_ols <span class="sc">-</span> beta_true)<span class="sc">^</span><span class="dv">2</span>)),</span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>    <span class="fu">sqrt</span>(<span class="fu">sum</span>((beta_St  <span class="sc">-</span> beta_true)<span class="sc">^</span><span class="dv">2</span>)),</span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>    <span class="fu">sqrt</span>(<span class="fu">sum</span>((beta_DSh <span class="sc">-</span> beta_true)<span class="sc">^</span><span class="dv">2</span>)),</span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a>    <span class="fu">sqrt</span>(<span class="fu">sum</span>((beta_Sh  <span class="sc">-</span> beta_true)<span class="sc">^</span><span class="dv">2</span>)),</span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>    <span class="fu">sqrt</span>(<span class="fu">sum</span>((beta_SR  <span class="sc">-</span> beta_true)<span class="sc">^</span><span class="dv">2</span>)),</span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a>    <span class="fu">sqrt</span>(<span class="fu">sum</span>((beta_GSR <span class="sc">-</span> beta_true)<span class="sc">^</span><span class="dv">2</span>))</span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a>  )</span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a>)</span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a></span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a><span class="fu">kable</span>(l2_table, <span class="at">digits =</span> <span class="dv">4</span>, <span class="at">caption =</span> <span class="st">&quot;L2 Distance Between Estimated and True Coefficients&quot;</span>)</span></code></pre></div>
+<table>
+<caption>L2 Distance Between Estimated and True Coefficients</caption>
+<thead>
+<tr class="header">
+<th align="left">Method</th>
+<th align="right">L2_Distance</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">OLS</td>
+<td align="right">0.9791</td>
+</tr>
+<tr class="even">
+<td align="left">St</td>
+<td align="right">0.9292</td>
+</tr>
+<tr class="odd">
+<td align="left">DSh</td>
+<td align="right">0.9261</td>
+</tr>
+<tr class="even">
+<td align="left">Sh</td>
+<td align="right">0.9787</td>
+</tr>
+<tr class="odd">
+<td align="left">SR</td>
+<td align="right">1.0092</td>
+</tr>
+<tr class="even">
+<td align="left">GSR</td>
+<td align="right">0.9491</td>
+</tr>
+</tbody>
+</table>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="co"># Coefficient comparison table</span></span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>coef_table <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>  <span class="at">OLS =</span> <span class="fu">round</span>(beta_ols, <span class="dv">3</span>),</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>  <span class="at">St =</span> <span class="fu">round</span>(beta_St, <span class="dv">3</span>),</span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>  <span class="at">DSh =</span> <span class="fu">round</span>(beta_DSh, <span class="dv">3</span>),</span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>  <span class="at">Sh =</span> <span class="fu">round</span>(beta_Sh, <span class="dv">3</span>),</span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>  <span class="at">SR =</span> <span class="fu">round</span>(beta_SR, <span class="dv">3</span>),</span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a>  <span class="at">GSR =</span> <span class="fu">round</span>(beta_GSR, <span class="dv">3</span>),</span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a>  <span class="at">True =</span> <span class="fu">round</span>(beta_true, <span class="dv">3</span>)</span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a>)</span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a></span>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a><span class="fu">kable</span>(coef_table, <span class="at">caption =</span> <span class="st">&quot;Estimated Coefficients by Method (rounded)&quot;</span>)</span></code></pre></div>
+<table>
+<caption>Estimated Coefficients by Method (rounded)</caption>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th align="right">OLS</th>
+<th align="right">St</th>
+<th align="right">DSh</th>
+<th align="right">Sh</th>
+<th align="right">SR</th>
+<th align="right">GSR</th>
+<th align="right">True</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">(Intercept)</td>
+<td align="right">1.135</td>
+<td align="right">1.129</td>
+<td align="right">1.113</td>
+<td align="right">1.135</td>
+<td align="right">0.751</td>
+<td align="right">1.150</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">X1</td>
+<td align="right">-1.148</td>
+<td align="right">-1.142</td>
+<td align="right">-1.103</td>
+<td align="right">-1.148</td>
+<td align="right">-1.382</td>
+<td align="right">-1.135</td>
+<td align="right">-1</td>
+</tr>
+<tr class="odd">
+<td align="left">X2</td>
+<td align="right">2.348</td>
+<td align="right">2.336</td>
+<td align="right">2.311</td>
+<td align="right">2.348</td>
+<td align="right">2.262</td>
+<td align="right">2.310</td>
+<td align="right">2</td>
+</tr>
+<tr class="even">
+<td align="left">X3</td>
+<td align="right">-2.079</td>
+<td align="right">-2.068</td>
+<td align="right">-2.035</td>
+<td align="right">-2.079</td>
+<td align="right">-2.053</td>
+<td align="right">-2.061</td>
+<td align="right">-2</td>
+</tr>
+<tr class="odd">
+<td align="left">X4</td>
+<td align="right">3.120</td>
+<td align="right">3.103</td>
+<td align="right">3.090</td>
+<td align="right">3.120</td>
+<td align="right">3.014</td>
+<td align="right">3.144</td>
+<td align="right">3</td>
+</tr>
+<tr class="even">
+<td align="left">X5</td>
+<td align="right">-2.923</td>
+<td align="right">-2.908</td>
+<td align="right">-2.890</td>
+<td align="right">-2.923</td>
+<td align="right">-2.958</td>
+<td align="right">-2.919</td>
+<td align="right">-3</td>
+</tr>
+<tr class="odd">
+<td align="left">X6</td>
+<td align="right">4.286</td>
+<td align="right">4.263</td>
+<td align="right">4.264</td>
+<td align="right">4.285</td>
+<td align="right">4.195</td>
+<td align="right">4.288</td>
+<td align="right">4</td>
+</tr>
+<tr class="even">
+<td align="left">X7</td>
+<td align="right">-4.759</td>
+<td align="right">-4.734</td>
+<td align="right">-4.741</td>
+<td align="right">-4.759</td>
+<td align="right">-4.791</td>
+<td align="right">-4.763</td>
+<td align="right">-4</td>
+</tr>
+<tr class="odd">
+<td align="left">X8</td>
+<td align="right">5.196</td>
+<td align="right">5.168</td>
+<td align="right">5.178</td>
+<td align="right">5.195</td>
+<td align="right">5.171</td>
+<td align="right">5.201</td>
+<td align="right">5</td>
+</tr>
+<tr class="even">
+<td align="left">X9</td>
+<td align="right">-5.120</td>
+<td align="right">-5.093</td>
+<td align="right">-5.103</td>
+<td align="right">-5.120</td>
+<td align="right">-5.204</td>
+<td align="right">-5.074</td>
+<td align="right">-5</td>
+</tr>
+<tr class="odd">
+<td align="left">X10</td>
+<td align="right">6.245</td>
+<td align="right">6.212</td>
+<td align="right">6.235</td>
+<td align="right">6.245</td>
+<td align="right">6.045</td>
+<td align="right">6.146</td>
+<td align="right">6</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="students-t-distribution" class="section level3">
+<h3>Student’s t Distribution</h3>
+<p>This example corresponds to the <a href="#students-t-distribution">Student’s <span class="math inline">\(t\)</span> distributed Multivariate Gaussian
+distributed covariates with Toeplitz covariance matrix</a> setup. We
+repeat the same design as above, but instead of Gaussian noise, we add a
+scaled <span class="math inline">\(t\)</span>-distributed noise with
+degrees of freedom <span class="math inline">\(\nu =
+\frac{50}{24}\)</span>.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="co"># Load packages</span></span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="fu">library</span>(savvySh)</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="fu">library</span>(MASS)</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="fu">library</span>(knitr)</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="co"># Parameters</span></span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">123</span>)</span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>n_val <span class="ot">&lt;-</span> <span class="dv">1000</span></span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a>p_val <span class="ot">&lt;-</span> <span class="dv">10</span></span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a>rho_val <span class="ot">&lt;-</span> <span class="fl">0.75</span></span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a>df_val <span class="ot">=</span> <span class="dv">50</span><span class="sc">/</span><span class="dv">24</span> </span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a>mu_val <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a></span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a><span class="co"># Correlation matrix</span></span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a>sigma.rho <span class="ot">&lt;-</span> <span class="cf">function</span>(rho_val, p_val) {</span>
+<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a>  rho_val <span class="sc">^</span> <span class="fu">abs</span>(<span class="fu">outer</span>(<span class="dv">1</span><span class="sc">:</span>p_val, <span class="dv">1</span><span class="sc">:</span>p_val, <span class="st">&quot;-&quot;</span>))</span>
+<span id="cb4-17"><a href="#cb4-17" tabindex="-1"></a>}</span>
+<span id="cb4-18"><a href="#cb4-18" tabindex="-1"></a></span>
+<span id="cb4-19"><a href="#cb4-19" tabindex="-1"></a><span class="co"># True beta</span></span>
+<span id="cb4-20"><a href="#cb4-20" tabindex="-1"></a>theta_func <span class="ot">&lt;-</span> <span class="cf">function</span>(p_val) {</span>
+<span id="cb4-21"><a href="#cb4-21" tabindex="-1"></a>  sgn <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="sc">-</span><span class="dv">1</span>), <span class="at">length.out =</span> p_val)</span>
+<span id="cb4-22"><a href="#cb4-22" tabindex="-1"></a>  mag <span class="ot">&lt;-</span> <span class="fu">ceiling</span>(<span class="fu">seq_len</span>(p_val) <span class="sc">/</span> <span class="dv">2</span>)</span>
+<span id="cb4-23"><a href="#cb4-23" tabindex="-1"></a>  sgn <span class="sc">*</span> mag</span>
+<span id="cb4-24"><a href="#cb4-24" tabindex="-1"></a>}</span>
+<span id="cb4-25"><a href="#cb4-25" tabindex="-1"></a></span>
+<span id="cb4-26"><a href="#cb4-26" tabindex="-1"></a><span class="co"># Simulate data</span></span>
+<span id="cb4-27"><a href="#cb4-27" tabindex="-1"></a>Sigma <span class="ot">&lt;-</span> <span class="fu">sigma.rho</span>(rho_val, p_val)</span>
+<span id="cb4-28"><a href="#cb4-28" tabindex="-1"></a>X <span class="ot">&lt;-</span> <span class="fu">mvrnorm</span>(n_val, <span class="at">mu =</span> <span class="fu">rep</span>(mu_val, p_val), <span class="at">Sigma =</span> Sigma)</span>
+<span id="cb4-29"><a href="#cb4-29" tabindex="-1"></a>X_intercept <span class="ot">&lt;-</span> <span class="fu">cbind</span>(<span class="dv">1</span>, X)</span>
+<span id="cb4-30"><a href="#cb4-30" tabindex="-1"></a>beta_true <span class="ot">&lt;-</span> <span class="fu">theta_func</span>(p_val <span class="sc">+</span> <span class="dv">1</span>)</span>
+<span id="cb4-31"><a href="#cb4-31" tabindex="-1"></a>y <span class="ot">&lt;-</span> <span class="fu">as.vector</span>(X_intercept <span class="sc">%*%</span> beta_true) <span class="sc">+</span> <span class="fu">rt</span>(<span class="at">n =</span> n_val, <span class="at">df =</span> df_val)</span>
+<span id="cb4-32"><a href="#cb4-32" tabindex="-1"></a></span>
+<span id="cb4-33"><a href="#cb4-33" tabindex="-1"></a><span class="co"># Fit models</span></span>
+<span id="cb4-34"><a href="#cb4-34" tabindex="-1"></a>ols_fit <span class="ot">&lt;-</span> <span class="fu">lm</span>(y <span class="sc">~</span> X)</span>
+<span id="cb4-35"><a href="#cb4-35" tabindex="-1"></a>beta_ols <span class="ot">&lt;-</span> <span class="fu">coef</span>(ols_fit)</span>
+<span id="cb4-36"><a href="#cb4-36" tabindex="-1"></a></span>
+<span id="cb4-37"><a href="#cb4-37" tabindex="-1"></a>multi_results <span class="ot">&lt;-</span> <span class="fu">savvySh</span>(X, y, <span class="at">model_class =</span> <span class="st">&quot;Multiplicative&quot;</span>, <span class="at">include_Sh =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb4-38"><a href="#cb4-38" tabindex="-1"></a>beta_St  <span class="ot">&lt;-</span> <span class="fu">coef</span>(multi_results, <span class="st">&quot;St&quot;</span>)</span>
+<span id="cb4-39"><a href="#cb4-39" tabindex="-1"></a>beta_DSh <span class="ot">&lt;-</span> <span class="fu">coef</span>(multi_results, <span class="st">&quot;DSh&quot;</span>)</span>
+<span id="cb4-40"><a href="#cb4-40" tabindex="-1"></a>beta_Sh  <span class="ot">&lt;-</span> <span class="fu">coef</span>(multi_results, <span class="st">&quot;Sh&quot;</span>)</span>
+<span id="cb4-41"><a href="#cb4-41" tabindex="-1"></a></span>
+<span id="cb4-42"><a href="#cb4-42" tabindex="-1"></a>slab_results <span class="ot">&lt;-</span> <span class="fu">savvySh</span>(X, y, <span class="at">model_class =</span> <span class="st">&quot;Slab&quot;</span>)</span>
+<span id="cb4-43"><a href="#cb4-43" tabindex="-1"></a>beta_SR  <span class="ot">&lt;-</span> <span class="fu">coef</span>(slab_results, <span class="st">&quot;SR&quot;</span>)</span>
+<span id="cb4-44"><a href="#cb4-44" tabindex="-1"></a>beta_GSR <span class="ot">&lt;-</span> <span class="fu">coef</span>(slab_results, <span class="st">&quot;GSR&quot;</span>)</span></code></pre></div>
+<p>The tables below report the results of each estimator: the first
+table shows the <span class="math inline">\(L_2\)</span> distance
+between the estimated coefficient vector and the ground truth, while the
+second table displays the actual estimated coefficients (rounded) for
+each method alongside the true values.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="co"># L2 comparison</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>l2_table <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>  <span class="at">Method =</span> <span class="fu">c</span>(<span class="st">&quot;OLS&quot;</span>, <span class="st">&quot;St&quot;</span>, <span class="st">&quot;DSh&quot;</span>, <span class="st">&quot;Sh&quot;</span>, <span class="st">&quot;SR&quot;</span>, <span class="st">&quot;GSR&quot;</span>),</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>  <span class="at">L2_Distance =</span> <span class="fu">c</span>(</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>    <span class="fu">sqrt</span>(<span class="fu">sum</span>((beta_ols <span class="sc">-</span> beta_true)<span class="sc">^</span><span class="dv">2</span>)),</span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>    <span class="fu">sqrt</span>(<span class="fu">sum</span>((beta_St  <span class="sc">-</span> beta_true)<span class="sc">^</span><span class="dv">2</span>)),</span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>    <span class="fu">sqrt</span>(<span class="fu">sum</span>((beta_DSh <span class="sc">-</span> beta_true)<span class="sc">^</span><span class="dv">2</span>)),</span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>    <span class="fu">sqrt</span>(<span class="fu">sum</span>((beta_Sh  <span class="sc">-</span> beta_true)<span class="sc">^</span><span class="dv">2</span>)),</span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>    <span class="fu">sqrt</span>(<span class="fu">sum</span>((beta_SR  <span class="sc">-</span> beta_true)<span class="sc">^</span><span class="dv">2</span>)),</span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a>    <span class="fu">sqrt</span>(<span class="fu">sum</span>((beta_GSR <span class="sc">-</span> beta_true)<span class="sc">^</span><span class="dv">2</span>))</span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a>  )</span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a>)</span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a></span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a><span class="fu">kable</span>(l2_table, <span class="at">digits =</span> <span class="dv">4</span>, <span class="at">caption =</span> <span class="st">&quot;L2 Distance Between Estimated and True Coefficients&quot;</span>)</span></code></pre></div>
+<table>
+<caption>L2 Distance Between Estimated and True Coefficients</caption>
+<thead>
+<tr class="header">
+<th align="left">Method</th>
+<th align="right">L2_Distance</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">OLS</td>
+<td align="right">5.8495</td>
+</tr>
+<tr class="even">
+<td align="left">St</td>
+<td align="right">5.8271</td>
+</tr>
+<tr class="odd">
+<td align="left">DSh</td>
+<td align="right">5.2781</td>
+</tr>
+<tr class="even">
+<td align="left">Sh</td>
+<td align="right">5.8494</td>
+</tr>
+<tr class="odd">
+<td align="left">SR</td>
+<td align="right">5.9631</td>
+</tr>
+<tr class="even">
+<td align="left">GSR</td>
+<td align="right">5.1581</td>
+</tr>
+</tbody>
+</table>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="co"># Coefficient comparison table</span></span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>coef_table <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>  <span class="at">OLS =</span> <span class="fu">round</span>(beta_ols, <span class="dv">3</span>),</span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>  <span class="at">St =</span> <span class="fu">round</span>(beta_St, <span class="dv">3</span>),</span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>  <span class="at">DSh =</span> <span class="fu">round</span>(beta_DSh, <span class="dv">3</span>),</span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>  <span class="at">Sh =</span> <span class="fu">round</span>(beta_Sh, <span class="dv">3</span>),</span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a>  <span class="at">SR =</span> <span class="fu">round</span>(beta_SR, <span class="dv">3</span>),</span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a>  <span class="at">GSR =</span> <span class="fu">round</span>(beta_GSR, <span class="dv">3</span>),</span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a>  <span class="at">True =</span> <span class="fu">round</span>(beta_true, <span class="dv">3</span>)</span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a>)</span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a></span>
+<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a><span class="fu">kable</span>(coef_table, <span class="at">caption =</span> <span class="st">&quot;Estimated Coefficients by Method (rounded)&quot;</span>)</span></code></pre></div>
+<table>
+<caption>Estimated Coefficients by Method (rounded)</caption>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th align="right">OLS</th>
+<th align="right">St</th>
+<th align="right">DSh</th>
+<th align="right">Sh</th>
+<th align="right">SR</th>
+<th align="right">GSR</th>
+<th align="right">True</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">(Intercept)</td>
+<td align="right">-0.345</td>
+<td align="right">-0.252</td>
+<td align="right">-0.023</td>
+<td align="right">-0.345</td>
+<td align="right">-0.623</td>
+<td align="right">-0.368</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">X1</td>
+<td align="right">-0.115</td>
+<td align="right">-0.084</td>
+<td align="right">0.000</td>
+<td align="right">-0.115</td>
+<td align="right">-0.285</td>
+<td align="right">0.488</td>
+<td align="right">-1</td>
+</tr>
+<tr class="odd">
+<td align="left">X2</td>
+<td align="right">-0.811</td>
+<td align="right">-0.592</td>
+<td align="right">-0.082</td>
+<td align="right">-0.811</td>
+<td align="right">-0.873</td>
+<td align="right">-0.426</td>
+<td align="right">2</td>
+</tr>
+<tr class="even">
+<td align="left">X3</td>
+<td align="right">1.835</td>
+<td align="right">1.339</td>
+<td align="right">0.653</td>
+<td align="right">1.835</td>
+<td align="right">1.853</td>
+<td align="right">0.068</td>
+<td align="right">-2</td>
+</tr>
+<tr class="odd">
+<td align="left">X4</td>
+<td align="right">3.308</td>
+<td align="right">2.413</td>
+<td align="right">2.118</td>
+<td align="right">3.308</td>
+<td align="right">3.232</td>
+<td align="right">3.587</td>
+<td align="right">3</td>
+</tr>
+<tr class="even">
+<td align="left">X5</td>
+<td align="right">-5.577</td>
+<td align="right">-4.069</td>
+<td align="right">-4.621</td>
+<td align="right">-5.577</td>
+<td align="right">-5.602</td>
+<td align="right">-4.396</td>
+<td align="right">-3</td>
+</tr>
+<tr class="odd">
+<td align="left">X6</td>
+<td align="right">3.148</td>
+<td align="right">2.297</td>
+<td align="right">1.955</td>
+<td align="right">3.148</td>
+<td align="right">3.082</td>
+<td align="right">2.635</td>
+<td align="right">4</td>
+</tr>
+<tr class="even">
+<td align="left">X7</td>
+<td align="right">-2.880</td>
+<td align="right">-2.101</td>
+<td align="right">-1.677</td>
+<td align="right">-2.879</td>
+<td align="right">-2.903</td>
+<td align="right">-1.918</td>
+<td align="right">-4</td>
+</tr>
+<tr class="odd">
+<td align="left">X8</td>
+<td align="right">5.121</td>
+<td align="right">3.736</td>
+<td align="right">4.178</td>
+<td align="right">5.121</td>
+<td align="right">5.103</td>
+<td align="right">3.825</td>
+<td align="right">5</td>
+</tr>
+<tr class="even">
+<td align="left">X9</td>
+<td align="right">-5.497</td>
+<td align="right">-4.011</td>
+<td align="right">-4.614</td>
+<td align="right">-5.497</td>
+<td align="right">-5.558</td>
+<td align="right">-4.731</td>
+<td align="right">-5</td>
+</tr>
+<tr class="odd">
+<td align="left">X10</td>
+<td align="right">5.805</td>
+<td align="right">4.235</td>
+<td align="right">5.207</td>
+<td align="right">5.805</td>
+<td align="right">5.660</td>
+<td align="right">4.447</td>
+<td align="right">6</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="gaussian-copula-with-binomial-margins" class="section level3">
+<h3>Gaussian Copula with Binomial Margins</h3>
+<p>This example corresponds to the <a href="#gaussian-copula-with-binomial-margins">Multivariate Gaussian
+Copula with Binomial marginal distributed covariates and Toeplitz
+covariance matrix</a> setup. The covariates are transformed from a
+Gaussian copula to Binomial marginals using the inverse CDF transform.
+This simulates discrete predictor variables.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="co"># Load packages</span></span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="fu">library</span>(savvySh)</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a><span class="fu">library</span>(MASS)</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a><span class="fu">library</span>(knitr)</span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a></span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a><span class="co"># Parameters</span></span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">123</span>)</span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a>n_val <span class="ot">&lt;-</span> <span class="dv">1000</span></span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a>p_val <span class="ot">&lt;-</span> <span class="dv">10</span></span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a>rho_val <span class="ot">&lt;-</span> <span class="fl">0.75</span></span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a>q_0 <span class="ot">&lt;-</span> <span class="fl">0.01</span></span>
+<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a>sigma_val <span class="ot">&lt;-</span> <span class="dv">5</span></span>
+<span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a></span>
+<span id="cb7-14"><a href="#cb7-14" tabindex="-1"></a><span class="co"># Correlation matrix</span></span>
+<span id="cb7-15"><a href="#cb7-15" tabindex="-1"></a>sigma.rho <span class="ot">&lt;-</span> <span class="cf">function</span>(rho_val, p_val) {</span>
+<span id="cb7-16"><a href="#cb7-16" tabindex="-1"></a>  rho_val <span class="sc">^</span> <span class="fu">abs</span>(<span class="fu">outer</span>(<span class="dv">1</span><span class="sc">:</span>p_val, <span class="dv">1</span><span class="sc">:</span>p_val, <span class="st">&quot;-&quot;</span>))</span>
+<span id="cb7-17"><a href="#cb7-17" tabindex="-1"></a>}</span>
+<span id="cb7-18"><a href="#cb7-18" tabindex="-1"></a></span>
+<span id="cb7-19"><a href="#cb7-19" tabindex="-1"></a>sigma.temp <span class="ot">&lt;-</span> <span class="fu">sigma.rho</span>(rho_val, p_val) </span>
+<span id="cb7-20"><a href="#cb7-20" tabindex="-1"></a>Z <span class="ot">&lt;-</span> <span class="fu">mvrnorm</span>(n_val, <span class="at">mu =</span> <span class="fu">rep</span>(<span class="dv">0</span>, p_val), <span class="at">Sigma =</span> sigma.temp) </span>
+<span id="cb7-21"><a href="#cb7-21" tabindex="-1"></a>X <span class="ot">&lt;-</span> <span class="fu">apply</span>(Z, <span class="dv">2</span>, <span class="cf">function</span>(z_col) <span class="fu">qbinom</span>(<span class="fu">pnorm</span>(z_col), <span class="at">size =</span> <span class="dv">2</span>, <span class="at">prob =</span> q_0))  </span>
+<span id="cb7-22"><a href="#cb7-22" tabindex="-1"></a>X_intercept <span class="ot">&lt;-</span> <span class="fu">cbind</span>(<span class="dv">1</span>, X)</span>
+<span id="cb7-23"><a href="#cb7-23" tabindex="-1"></a>beta_true <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fu">runif</span>(p_val, <span class="fl">0.01</span>, <span class="fl">0.3</span>))</span>
+<span id="cb7-24"><a href="#cb7-24" tabindex="-1"></a>y <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(n_val, <span class="at">mean =</span> <span class="fu">as.vector</span>(X_intercept <span class="sc">%*%</span> beta_true), <span class="at">sd =</span> sigma_val)</span>
+<span id="cb7-25"><a href="#cb7-25" tabindex="-1"></a></span>
+<span id="cb7-26"><a href="#cb7-26" tabindex="-1"></a><span class="co"># Fit models</span></span>
+<span id="cb7-27"><a href="#cb7-27" tabindex="-1"></a>ols_fit <span class="ot">&lt;-</span> <span class="fu">lm</span>(y <span class="sc">~</span> X)</span>
+<span id="cb7-28"><a href="#cb7-28" tabindex="-1"></a>beta_ols <span class="ot">&lt;-</span> <span class="fu">coef</span>(ols_fit)</span>
+<span id="cb7-29"><a href="#cb7-29" tabindex="-1"></a></span>
+<span id="cb7-30"><a href="#cb7-30" tabindex="-1"></a>multi_results <span class="ot">&lt;-</span> <span class="fu">savvySh</span>(X, y, <span class="at">model_class =</span> <span class="st">&quot;Multiplicative&quot;</span>, <span class="at">include_Sh =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb7-31"><a href="#cb7-31" tabindex="-1"></a>beta_St  <span class="ot">&lt;-</span> <span class="fu">coef</span>(multi_results, <span class="st">&quot;St&quot;</span>)</span>
+<span id="cb7-32"><a href="#cb7-32" tabindex="-1"></a>beta_DSh <span class="ot">&lt;-</span> <span class="fu">coef</span>(multi_results, <span class="st">&quot;DSh&quot;</span>)</span>
+<span id="cb7-33"><a href="#cb7-33" tabindex="-1"></a>beta_Sh  <span class="ot">&lt;-</span> <span class="fu">coef</span>(multi_results, <span class="st">&quot;Sh&quot;</span>)</span>
+<span id="cb7-34"><a href="#cb7-34" tabindex="-1"></a></span>
+<span id="cb7-35"><a href="#cb7-35" tabindex="-1"></a>slab_results <span class="ot">&lt;-</span> <span class="fu">savvySh</span>(X, y, <span class="at">model_class =</span> <span class="st">&quot;Slab&quot;</span>)</span>
+<span id="cb7-36"><a href="#cb7-36" tabindex="-1"></a>beta_SR  <span class="ot">&lt;-</span> <span class="fu">coef</span>(slab_results, <span class="st">&quot;SR&quot;</span>)</span>
+<span id="cb7-37"><a href="#cb7-37" tabindex="-1"></a>beta_GSR <span class="ot">&lt;-</span> <span class="fu">coef</span>(slab_results, <span class="st">&quot;GSR&quot;</span>)</span></code></pre></div>
+<p>The tables below report the results of each estimator: the first
+table shows the <span class="math inline">\(L_2\)</span> distance
+between the estimated coefficient vector and the ground truth, while the
+second table displays the actual estimated coefficients (rounded) for
+each method alongside the true values.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="co"># L2 comparison</span></span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>l2_table <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>  <span class="at">Method =</span> <span class="fu">c</span>(<span class="st">&quot;OLS&quot;</span>, <span class="st">&quot;St&quot;</span>, <span class="st">&quot;DSh&quot;</span>, <span class="st">&quot;Sh&quot;</span>, <span class="st">&quot;SR&quot;</span>, <span class="st">&quot;GSR&quot;</span>),</span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>  <span class="at">L2_Distance =</span> <span class="fu">c</span>(</span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>    <span class="fu">sqrt</span>(<span class="fu">sum</span>((beta_ols <span class="sc">-</span> beta_true)<span class="sc">^</span><span class="dv">2</span>)),</span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a>    <span class="fu">sqrt</span>(<span class="fu">sum</span>((beta_St  <span class="sc">-</span> beta_true)<span class="sc">^</span><span class="dv">2</span>)),</span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a>    <span class="fu">sqrt</span>(<span class="fu">sum</span>((beta_DSh <span class="sc">-</span> beta_true)<span class="sc">^</span><span class="dv">2</span>)),</span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a>    <span class="fu">sqrt</span>(<span class="fu">sum</span>((beta_Sh  <span class="sc">-</span> beta_true)<span class="sc">^</span><span class="dv">2</span>)),</span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a>    <span class="fu">sqrt</span>(<span class="fu">sum</span>((beta_SR  <span class="sc">-</span> beta_true)<span class="sc">^</span><span class="dv">2</span>)),</span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a>    <span class="fu">sqrt</span>(<span class="fu">sum</span>((beta_GSR <span class="sc">-</span> beta_true)<span class="sc">^</span><span class="dv">2</span>))</span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a>  )</span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a>)</span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a></span>
+<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a><span class="fu">kable</span>(l2_table, <span class="at">digits =</span> <span class="dv">4</span>, <span class="at">caption =</span> <span class="st">&quot;L2 Distance Between Estimated and True Coefficients&quot;</span>)</span></code></pre></div>
+<table>
+<caption>L2 Distance Between Estimated and True Coefficients</caption>
+<thead>
+<tr class="header">
+<th align="left">Method</th>
+<th align="right">L2_Distance</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">OLS</td>
+<td align="right">3.0967</td>
+</tr>
+<tr class="even">
+<td align="left">St</td>
+<td align="right">1.0756</td>
+</tr>
+<tr class="odd">
+<td align="left">DSh</td>
+<td align="right">1.8059</td>
+</tr>
+<tr class="even">
+<td align="left">Sh</td>
+<td align="right">3.0724</td>
+</tr>
+<tr class="odd">
+<td align="left">SR</td>
+<td align="right">3.1182</td>
+</tr>
+<tr class="even">
+<td align="left">GSR</td>
+<td align="right">1.6176</td>
+</tr>
+</tbody>
+</table>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a></span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="co"># Coefficient comparison table</span></span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>coef_table <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>  <span class="at">OLS =</span> <span class="fu">round</span>(beta_ols, <span class="dv">3</span>),</span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>  <span class="at">St =</span> <span class="fu">round</span>(beta_St, <span class="dv">3</span>),</span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>  <span class="at">DSh =</span> <span class="fu">round</span>(beta_DSh, <span class="dv">3</span>),</span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a>  <span class="at">Sh =</span> <span class="fu">round</span>(beta_Sh, <span class="dv">3</span>),</span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a>  <span class="at">SR =</span> <span class="fu">round</span>(beta_SR, <span class="dv">3</span>),</span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a>  <span class="at">GSR =</span> <span class="fu">round</span>(beta_GSR, <span class="dv">3</span>),</span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a>  <span class="at">True =</span> <span class="fu">round</span>(beta_true, <span class="dv">3</span>)</span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a>)</span>
+<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a></span>
+<span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a><span class="fu">kable</span>(coef_table, <span class="at">caption =</span> <span class="st">&quot;Estimated Coefficients by Method (rounded)&quot;</span>)</span></code></pre></div>
+<table>
+<caption>Estimated Coefficients by Method (rounded)</caption>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th align="right">OLS</th>
+<th align="right">St</th>
+<th align="right">DSh</th>
+<th align="right">Sh</th>
+<th align="right">SR</th>
+<th align="right">GSR</th>
+<th align="right">True</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">(Intercept)</td>
+<td align="right">0.122</td>
+<td align="right">0.042</td>
+<td align="right">0.043</td>
+<td align="right">0.123</td>
+<td align="right">0.133</td>
+<td align="right">0.048</td>
+<td align="right">0.000</td>
+</tr>
+<tr class="even">
+<td align="left">X1</td>
+<td align="right">0.442</td>
+<td align="right">0.153</td>
+<td align="right">0.045</td>
+<td align="right">0.439</td>
+<td align="right">0.420</td>
+<td align="right">0.060</td>
+<td align="right">0.297</td>
+</tr>
+<tr class="odd">
+<td align="left">X2</td>
+<td align="right">-0.681</td>
+<td align="right">-0.235</td>
+<td align="right">-0.112</td>
+<td align="right">-0.674</td>
+<td align="right">-0.842</td>
+<td align="right">-0.352</td>
+<td align="right">0.098</td>
+</tr>
+<tr class="even">
+<td align="left">X3</td>
+<td align="right">0.549</td>
+<td align="right">0.190</td>
+<td align="right">0.070</td>
+<td align="right">0.545</td>
+<td align="right">0.459</td>
+<td align="right">0.081</td>
+<td align="right">0.136</td>
+</tr>
+<tr class="odd">
+<td align="left">X4</td>
+<td align="right">0.302</td>
+<td align="right">0.104</td>
+<td align="right">0.010</td>
+<td align="right">0.307</td>
+<td align="right">0.225</td>
+<td align="right">0.462</td>
+<td align="right">0.057</td>
+</tr>
+<tr class="even">
+<td align="left">X5</td>
+<td align="right">1.634</td>
+<td align="right">0.564</td>
+<td align="right">0.979</td>
+<td align="right">1.622</td>
+<td align="right">1.542</td>
+<td align="right">1.167</td>
+<td align="right">0.249</td>
+</tr>
+<tr class="odd">
+<td align="left">X6</td>
+<td align="right">-0.049</td>
+<td align="right">-0.017</td>
+<td align="right">0.000</td>
+<td align="right">-0.048</td>
+<td align="right">-0.153</td>
+<td align="right">0.030</td>
+<td align="right">0.070</td>
+</tr>
+<tr class="even">
+<td align="left">X7</td>
+<td align="right">-0.278</td>
+<td align="right">-0.096</td>
+<td align="right">-0.014</td>
+<td align="right">-0.277</td>
+<td align="right">-0.308</td>
+<td align="right">-0.194</td>
+<td align="right">0.093</td>
+</tr>
+<tr class="odd">
+<td align="left">X8</td>
+<td align="right">-1.633</td>
+<td align="right">-0.564</td>
+<td align="right">-1.036</td>
+<td align="right">-1.623</td>
+<td align="right">-1.668</td>
+<td align="right">-0.784</td>
+<td align="right">0.168</td>
+</tr>
+<tr class="even">
+<td align="left">X9</td>
+<td align="right">1.858</td>
+<td align="right">0.642</td>
+<td align="right">1.223</td>
+<td align="right">1.841</td>
+<td align="right">1.797</td>
+<td align="right">0.759</td>
+<td align="right">0.181</td>
+</tr>
+<tr class="odd">
+<td align="left">X10</td>
+<td align="right">-0.628</td>
+<td align="right">-0.217</td>
+<td align="right">-0.105</td>
+<td align="right">-0.620</td>
+<td align="right">-0.761</td>
+<td align="right">-0.007</td>
+<td align="right">0.138</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div id="linear-shrinkage-1" class="section level2">
+<h2>Linear Shrinkage</h2>
+<p>This section describes the LSh estimator, which shrinks the OLS
+coefficients (through the origin) toward a target based on the diagonal
+of the <span class="math inline">\(\Sigma\)</span>. The method assumes
+standardized data.</p>
+<div id="multivariate-gaussian-distribution-1" class="section level3">
+<h3>Multivariate Gaussian Distribution</h3>
+<p>This example corresponds to the <a href="#multivariate-gaussian-distribution">Multivariate Gaussian
+distributed covariates with Toeplitz covariance matrix</a> setup. We
+simulate from a Gaussian design with Toeplitz correlation, using
+additive Gaussian noise with variance <span class="math inline">\(\sigma^2 = 25\)</span>. <strong>Centering is
+applied before estimation</strong>.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="co"># Load packages</span></span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="fu">library</span>(savvySh)</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a><span class="fu">library</span>(MASS)</span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a><span class="fu">library</span>(knitr)</span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a></span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a><span class="co"># Parameters</span></span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a>n_val <span class="ot">&lt;-</span> <span class="dv">1000</span></span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a>p_val <span class="ot">&lt;-</span> <span class="dv">10</span></span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a>rho_val <span class="ot">&lt;-</span> <span class="fl">0.75</span></span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a>sigma_val <span class="ot">&lt;-</span> <span class="dv">5</span></span>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a>mu_val <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a></span>
+<span id="cb10-14"><a href="#cb10-14" tabindex="-1"></a><span class="co"># Correlation matrix</span></span>
+<span id="cb10-15"><a href="#cb10-15" tabindex="-1"></a>sigma.rho <span class="ot">&lt;-</span> <span class="cf">function</span>(rho_val, p_val) {</span>
+<span id="cb10-16"><a href="#cb10-16" tabindex="-1"></a>  rho_val <span class="sc">^</span> <span class="fu">abs</span>(<span class="fu">outer</span>(<span class="dv">1</span><span class="sc">:</span>p_val, <span class="dv">1</span><span class="sc">:</span>p_val, <span class="st">&quot;-&quot;</span>))</span>
+<span id="cb10-17"><a href="#cb10-17" tabindex="-1"></a>}</span>
+<span id="cb10-18"><a href="#cb10-18" tabindex="-1"></a></span>
+<span id="cb10-19"><a href="#cb10-19" tabindex="-1"></a><span class="co"># True beta</span></span>
+<span id="cb10-20"><a href="#cb10-20" tabindex="-1"></a>theta_func <span class="ot">&lt;-</span> <span class="cf">function</span>(p_val) {</span>
+<span id="cb10-21"><a href="#cb10-21" tabindex="-1"></a>  sgn <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="sc">-</span><span class="dv">1</span>), <span class="at">length.out =</span> p_val)</span>
+<span id="cb10-22"><a href="#cb10-22" tabindex="-1"></a>  mag <span class="ot">&lt;-</span> <span class="fu">ceiling</span>(<span class="fu">seq_len</span>(p_val) <span class="sc">/</span> <span class="dv">2</span>)</span>
+<span id="cb10-23"><a href="#cb10-23" tabindex="-1"></a>  sgn <span class="sc">*</span> mag</span>
+<span id="cb10-24"><a href="#cb10-24" tabindex="-1"></a>}</span>
+<span id="cb10-25"><a href="#cb10-25" tabindex="-1"></a></span>
+<span id="cb10-26"><a href="#cb10-26" tabindex="-1"></a><span class="co"># Simulate data</span></span>
+<span id="cb10-27"><a href="#cb10-27" tabindex="-1"></a>Sigma <span class="ot">&lt;-</span> <span class="fu">sigma.rho</span>(rho_val, p_val)</span>
+<span id="cb10-28"><a href="#cb10-28" tabindex="-1"></a>X <span class="ot">&lt;-</span> <span class="fu">mvrnorm</span>(n_val, <span class="at">mu =</span> <span class="fu">rep</span>(mu_val, p_val), <span class="at">Sigma =</span> Sigma)</span>
+<span id="cb10-29"><a href="#cb10-29" tabindex="-1"></a>X_centred <span class="ot">&lt;-</span> <span class="fu">scale</span>(X, <span class="at">center =</span> <span class="cn">TRUE</span>, <span class="at">scale =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb10-30"><a href="#cb10-30" tabindex="-1"></a>beta_true <span class="ot">&lt;-</span> <span class="fu">theta_func</span>(p_val)</span>
+<span id="cb10-31"><a href="#cb10-31" tabindex="-1"></a>y <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(n_val, <span class="at">mean =</span> X_centred <span class="sc">%*%</span> beta_true, <span class="at">sd =</span> sigma_val)</span>
+<span id="cb10-32"><a href="#cb10-32" tabindex="-1"></a>y_centred <span class="ot">&lt;-</span> <span class="fu">scale</span>(y, <span class="at">center =</span> <span class="cn">TRUE</span>, <span class="at">scale =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb10-33"><a href="#cb10-33" tabindex="-1"></a></span>
+<span id="cb10-34"><a href="#cb10-34" tabindex="-1"></a><span class="co"># Fit models</span></span>
+<span id="cb10-35"><a href="#cb10-35" tabindex="-1"></a>ols_fit <span class="ot">&lt;-</span> <span class="fu">lm</span>(y_centred <span class="sc">~</span> X_centred<span class="dv">-1</span>)</span>
+<span id="cb10-36"><a href="#cb10-36" tabindex="-1"></a>beta_ols <span class="ot">&lt;-</span> <span class="fu">coef</span>(ols_fit)</span>
+<span id="cb10-37"><a href="#cb10-37" tabindex="-1"></a></span>
+<span id="cb10-38"><a href="#cb10-38" tabindex="-1"></a>linear_results <span class="ot">&lt;-</span> <span class="fu">savvySh</span>(X_centred, y_centred, <span class="at">model_class =</span> <span class="st">&quot;Linear&quot;</span>)</span>
+<span id="cb10-39"><a href="#cb10-39" tabindex="-1"></a>beta_LSh <span class="ot">&lt;-</span> <span class="fu">coef</span>(linear_results, <span class="st">&quot;LSh&quot;</span>)</span></code></pre></div>
+<p>The tables below report the results of each estimator: the first
+table shows the <span class="math inline">\(L_2\)</span> distance
+between the estimated coefficient vector and the ground truth, while the
+second table displays the actual estimated coefficients (rounded) for
+each method alongside the true values.</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a></span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a><span class="co"># L2 comparison</span></span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>l2_table <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>  <span class="at">Method =</span> <span class="fu">c</span>(<span class="st">&quot;OLS&quot;</span>, <span class="st">&quot;LSh&quot;</span>),</span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a>  <span class="at">L2_Distance =</span> <span class="fu">c</span>(</span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a>    <span class="fu">sqrt</span>(<span class="fu">sum</span>((beta_ols <span class="sc">-</span> beta_true)<span class="sc">^</span><span class="dv">2</span>)),</span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a>    <span class="fu">sqrt</span>(<span class="fu">sum</span>((beta_LSh  <span class="sc">-</span> beta_true)<span class="sc">^</span><span class="dv">2</span>))</span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a>  )</span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a>)</span>
+<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a></span>
+<span id="cb11-11"><a href="#cb11-11" tabindex="-1"></a><span class="fu">kable</span>(l2_table, <span class="at">digits =</span> <span class="dv">4</span>, <span class="at">caption =</span> <span class="st">&quot;L2 Distance Between Estimated and True Coefficients&quot;</span>)</span></code></pre></div>
+<table>
+<caption>L2 Distance Between Estimated and True Coefficients</caption>
+<thead>
+<tr class="header">
+<th align="left">Method</th>
+<th align="right">L2_Distance</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">OLS</td>
+<td align="right">0.7403</td>
+</tr>
+<tr class="even">
+<td align="left">LSh</td>
+<td align="right">0.7274</td>
+</tr>
+</tbody>
+</table>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a></span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a><span class="co"># Coefficient comparison table</span></span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>coef_table <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a>  <span class="at">OLS =</span> <span class="fu">round</span>(beta_ols, <span class="dv">3</span>),</span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a>  <span class="at">LSh =</span> <span class="fu">round</span>(beta_LSh, <span class="dv">3</span>),</span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a>  <span class="at">True =</span> <span class="fu">round</span>(beta_true, <span class="dv">3</span>)</span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a>)</span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a></span>
+<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a><span class="fu">kable</span>(coef_table, <span class="at">caption =</span> <span class="st">&quot;Estimated Coefficients by Method (rounded)&quot;</span>)</span></code></pre></div>
+<table>
+<caption>Estimated Coefficients by Method (rounded)</caption>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th align="right">OLS</th>
+<th align="right">LSh</th>
+<th align="right">True</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">X_centred1</td>
+<td align="right">1.238</td>
+<td align="right">1.238</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">X_centred2</td>
+<td align="right">-1.518</td>
+<td align="right">-1.503</td>
+<td align="right">-1</td>
+</tr>
+<tr class="odd">
+<td align="left">X_centred3</td>
+<td align="right">2.340</td>
+<td align="right">2.334</td>
+<td align="right">2</td>
+</tr>
+<tr class="even">
+<td align="left">X_centred4</td>
+<td align="right">-2.089</td>
+<td align="right">-2.072</td>
+<td align="right">-2</td>
+</tr>
+<tr class="odd">
+<td align="left">X_centred5</td>
+<td align="right">2.867</td>
+<td align="right">2.855</td>
+<td align="right">3</td>
+</tr>
+<tr class="even">
+<td align="left">X_centred6</td>
+<td align="right">-3.075</td>
+<td align="right">-3.053</td>
+<td align="right">-3</td>
+</tr>
+<tr class="odd">
+<td align="left">X_centred7</td>
+<td align="right">4.204</td>
+<td align="right">4.183</td>
+<td align="right">4</td>
+</tr>
+<tr class="even">
+<td align="left">X_centred8</td>
+<td align="right">-4.059</td>
+<td align="right">-4.037</td>
+<td align="right">-4</td>
+</tr>
+<tr class="odd">
+<td align="left">X_centred9</td>
+<td align="right">4.897</td>
+<td align="right">4.867</td>
+<td align="right">5</td>
+</tr>
+<tr class="even">
+<td align="left">X_centred10</td>
+<td align="right">-4.858</td>
+<td align="right">-4.839</td>
+<td align="right">-5</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="students-t-distribution-1" class="section level3">
+<h3>Student’s t Distribution</h3>
+<p>This example corresponds to the <a href="#students-t-distribution">Student’s <span class="math inline">\(t\)</span> distributed Multivariate Gaussian
+distributed covariates with Toeplitz covariance matrix</a> setup. We
+repeat the setup from above but replace Gaussian noise with <span class="math inline">\(t\)</span>-distributed noise with degrees of
+freedom <span class="math inline">\(\nu = \frac{50}{24}\)</span>.
+<strong>Centering is applied before estimation</strong>.</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="co"># Load packages</span></span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a><span class="fu">library</span>(savvySh)</span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a><span class="fu">library</span>(MASS)</span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a><span class="fu">library</span>(knitr)</span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a></span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a><span class="co"># Parameters</span></span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">123</span>)</span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a>n_val <span class="ot">&lt;-</span> <span class="dv">1000</span></span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a>p_val <span class="ot">&lt;-</span> <span class="dv">10</span></span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a>df_val <span class="ot">=</span> <span class="dv">50</span><span class="sc">/</span><span class="dv">24</span> </span>
+<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a>sigma_val <span class="ot">&lt;-</span> <span class="dv">5</span></span>
+<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a>mu_val <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb13-13"><a href="#cb13-13" tabindex="-1"></a></span>
+<span id="cb13-14"><a href="#cb13-14" tabindex="-1"></a><span class="co"># Correlation matrix</span></span>
+<span id="cb13-15"><a href="#cb13-15" tabindex="-1"></a>sigma.rho <span class="ot">&lt;-</span> <span class="cf">function</span>(rho_val, p_val) {</span>
+<span id="cb13-16"><a href="#cb13-16" tabindex="-1"></a>  rho_val <span class="sc">^</span> <span class="fu">abs</span>(<span class="fu">outer</span>(<span class="dv">1</span><span class="sc">:</span>p_val, <span class="dv">1</span><span class="sc">:</span>p_val, <span class="st">&quot;-&quot;</span>))</span>
+<span id="cb13-17"><a href="#cb13-17" tabindex="-1"></a>}</span>
+<span id="cb13-18"><a href="#cb13-18" tabindex="-1"></a></span>
+<span id="cb13-19"><a href="#cb13-19" tabindex="-1"></a><span class="co"># True beta</span></span>
+<span id="cb13-20"><a href="#cb13-20" tabindex="-1"></a>theta_func <span class="ot">&lt;-</span> <span class="cf">function</span>(p_val) {</span>
+<span id="cb13-21"><a href="#cb13-21" tabindex="-1"></a>  sgn <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="sc">-</span><span class="dv">1</span>), <span class="at">length.out =</span> p_val)</span>
+<span id="cb13-22"><a href="#cb13-22" tabindex="-1"></a>  mag <span class="ot">&lt;-</span> <span class="fu">ceiling</span>(<span class="fu">seq_len</span>(p_val) <span class="sc">/</span> <span class="dv">2</span>)</span>
+<span id="cb13-23"><a href="#cb13-23" tabindex="-1"></a>  sgn <span class="sc">*</span> mag</span>
+<span id="cb13-24"><a href="#cb13-24" tabindex="-1"></a>}</span>
+<span id="cb13-25"><a href="#cb13-25" tabindex="-1"></a></span>
+<span id="cb13-26"><a href="#cb13-26" tabindex="-1"></a><span class="co"># Simulate data</span></span>
+<span id="cb13-27"><a href="#cb13-27" tabindex="-1"></a>Sigma <span class="ot">&lt;-</span> <span class="fu">sigma.rho</span>(rho_val, p_val)</span>
+<span id="cb13-28"><a href="#cb13-28" tabindex="-1"></a>X <span class="ot">&lt;-</span> <span class="fu">mvrnorm</span>(n_val, <span class="at">mu =</span> <span class="fu">rep</span>(mu_val, p_val), <span class="at">Sigma =</span> Sigma)</span>
+<span id="cb13-29"><a href="#cb13-29" tabindex="-1"></a>X_centred <span class="ot">&lt;-</span> <span class="fu">scale</span>(X, <span class="at">center =</span> <span class="cn">TRUE</span>, <span class="at">scale =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb13-30"><a href="#cb13-30" tabindex="-1"></a>beta_true <span class="ot">&lt;-</span> <span class="fu">theta_func</span>(p_val)</span>
+<span id="cb13-31"><a href="#cb13-31" tabindex="-1"></a>y <span class="ot">&lt;-</span> <span class="fu">as.vector</span>(X_centred <span class="sc">%*%</span> beta_true) <span class="sc">+</span> <span class="fu">rt</span>(<span class="at">n =</span> n_val, <span class="at">df =</span> df_val)</span>
+<span id="cb13-32"><a href="#cb13-32" tabindex="-1"></a>y_centred <span class="ot">&lt;-</span> <span class="fu">scale</span>(y, <span class="at">center =</span> <span class="cn">TRUE</span>, <span class="at">scale =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb13-33"><a href="#cb13-33" tabindex="-1"></a></span>
+<span id="cb13-34"><a href="#cb13-34" tabindex="-1"></a><span class="co"># Fit models</span></span>
+<span id="cb13-35"><a href="#cb13-35" tabindex="-1"></a>ols_fit <span class="ot">&lt;-</span> <span class="fu">lm</span>(y_centred <span class="sc">~</span> X_centred<span class="dv">-1</span>)</span>
+<span id="cb13-36"><a href="#cb13-36" tabindex="-1"></a>beta_ols <span class="ot">&lt;-</span> <span class="fu">coef</span>(ols_fit)</span>
+<span id="cb13-37"><a href="#cb13-37" tabindex="-1"></a></span>
+<span id="cb13-38"><a href="#cb13-38" tabindex="-1"></a>linear_results <span class="ot">&lt;-</span> <span class="fu">savvySh</span>(X_centred, y_centred, <span class="at">model_class =</span> <span class="st">&quot;Linear&quot;</span>)</span>
+<span id="cb13-39"><a href="#cb13-39" tabindex="-1"></a>beta_LSh <span class="ot">&lt;-</span> <span class="fu">coef</span>(linear_results, <span class="st">&quot;LSh&quot;</span>)</span></code></pre></div>
+<p>The tables below report the results of each estimator: the first
+table shows the <span class="math inline">\(L_2\)</span> distance
+between the estimated coefficient vector and the ground truth, while the
+second table displays the actual estimated coefficients (rounded) for
+each method alongside the true values.</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="co"># L2 comparison</span></span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a>l2_table <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a>  <span class="at">Method =</span> <span class="fu">c</span>(<span class="st">&quot;OLS&quot;</span>, <span class="st">&quot;LSh&quot;</span>),</span>
+<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a>  <span class="at">L2_Distance =</span> <span class="fu">c</span>(</span>
+<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a>    <span class="fu">sqrt</span>(<span class="fu">sum</span>((beta_ols <span class="sc">-</span> beta_true)<span class="sc">^</span><span class="dv">2</span>)),</span>
+<span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a>    <span class="fu">sqrt</span>(<span class="fu">sum</span>((beta_LSh  <span class="sc">-</span> beta_true)<span class="sc">^</span><span class="dv">2</span>))</span>
+<span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a>  )</span>
+<span id="cb14-8"><a href="#cb14-8" tabindex="-1"></a>)</span>
+<span id="cb14-9"><a href="#cb14-9" tabindex="-1"></a></span>
+<span id="cb14-10"><a href="#cb14-10" tabindex="-1"></a><span class="fu">kable</span>(l2_table, <span class="at">digits =</span> <span class="dv">4</span>, <span class="at">caption =</span> <span class="st">&quot;L2 Distance Between Estimated and True Coefficients&quot;</span>)</span></code></pre></div>
+<table>
+<caption>L2 Distance Between Estimated and True Coefficients</caption>
+<thead>
+<tr class="header">
+<th align="left">Method</th>
+<th align="right">L2_Distance</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">OLS</td>
+<td align="right">5.6927</td>
+</tr>
+<tr class="even">
+<td align="left">LSh</td>
+<td align="right">4.8586</td>
+</tr>
+</tbody>
+</table>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a></span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a><span class="co"># Coefficient comparison table</span></span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a>coef_table <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a>  <span class="at">OLS =</span> <span class="fu">round</span>(beta_ols, <span class="dv">3</span>),</span>
+<span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a>  <span class="at">LSh =</span> <span class="fu">round</span>(beta_LSh, <span class="dv">3</span>),</span>
+<span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a>  <span class="at">True =</span> <span class="fu">round</span>(beta_true, <span class="dv">3</span>)</span>
+<span id="cb15-7"><a href="#cb15-7" tabindex="-1"></a>)</span>
+<span id="cb15-8"><a href="#cb15-8" tabindex="-1"></a></span>
+<span id="cb15-9"><a href="#cb15-9" tabindex="-1"></a><span class="fu">kable</span>(coef_table, <span class="at">caption =</span> <span class="st">&quot;Estimated Coefficients by Method (rounded)&quot;</span>)</span></code></pre></div>
+<table>
+<caption>Estimated Coefficients by Method (rounded)</caption>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th align="right">OLS</th>
+<th align="right">LSh</th>
+<th align="right">True</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">X_centred1</td>
+<td align="right">1.885</td>
+<td align="right">1.698</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">X_centred2</td>
+<td align="right">-3.811</td>
+<td align="right">-2.715</td>
+<td align="right">-1</td>
+</tr>
+<tr class="odd">
+<td align="left">X_centred3</td>
+<td align="right">5.835</td>
+<td align="right">4.813</td>
+<td align="right">2</td>
+</tr>
+<tr class="even">
+<td align="left">X_centred4</td>
+<td align="right">-1.692</td>
+<td align="right">-1.179</td>
+<td align="right">-2</td>
+</tr>
+<tr class="odd">
+<td align="left">X_centred5</td>
+<td align="right">0.423</td>
+<td align="right">0.297</td>
+<td align="right">3</td>
+</tr>
+<tr class="even">
+<td align="left">X_centred6</td>
+<td align="right">-3.852</td>
+<td align="right">-3.078</td>
+<td align="right">-3</td>
+</tr>
+<tr class="odd">
+<td align="left">X_centred7</td>
+<td align="right">5.120</td>
+<td align="right">3.907</td>
+<td align="right">4</td>
+</tr>
+<tr class="even">
+<td align="left">X_centred8</td>
+<td align="right">-3.879</td>
+<td align="right">-3.122</td>
+<td align="right">-4</td>
+</tr>
+<tr class="odd">
+<td align="left">X_centred9</td>
+<td align="right">4.503</td>
+<td align="right">3.199</td>
+<td align="right">5</td>
+</tr>
+<tr class="even">
+<td align="left">X_centred10</td>
+<td align="right">-5.195</td>
+<td align="right">-4.492</td>
+<td align="right">-5</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div id="shrinkage-ridge-regression-1" class="section level2">
+<h2>Shrinkage Ridge Regression</h2>
+<p>The SRR estimator improves upon RR by replacing the <span class="math inline">\(\Sigma\)</span> with a convex combination of <span class="math inline">\(\Sigma\)</span> and a scaled identity matrix,
+chosen to minimize the MSE of the coefficients.</p>
+<div id="latent-space-features" class="section level3">
+<h3>Latent Space Features</h3>
+<p>This example corresponds to the <a href="#latent-space-features">Latent Space Features</a> setup. Here,
+covariates are generated using a latent factor model with a small amount
+of additive Gaussian noise. This simulates a low-rank structure in the
+design matrix. We compare ridge regression estimates using
+<code>glmnet</code> against the SRR from <code>savvySh</code>.</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="co"># Load packages</span></span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a><span class="fu">library</span>(savvySh)</span>
+<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a><span class="fu">library</span>(MASS)</span>
+<span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a><span class="fu">library</span>(glmnet)</span>
+<span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a><span class="co">#&gt; Loading required package: Matrix</span></span>
+<span id="cb16-6"><a href="#cb16-6" tabindex="-1"></a><span class="co">#&gt; Loaded glmnet 4.1-8</span></span>
+<span id="cb16-7"><a href="#cb16-7" tabindex="-1"></a><span class="fu">library</span>(knitr)</span>
+<span id="cb16-8"><a href="#cb16-8" tabindex="-1"></a></span>
+<span id="cb16-9"><a href="#cb16-9" tabindex="-1"></a><span class="co"># Parameters</span></span>
+<span id="cb16-10"><a href="#cb16-10" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">123</span>)</span>
+<span id="cb16-11"><a href="#cb16-11" tabindex="-1"></a>n_val <span class="ot">&lt;-</span> <span class="dv">1000</span></span>
+<span id="cb16-12"><a href="#cb16-12" tabindex="-1"></a>p_val <span class="ot">&lt;-</span> <span class="dv">10</span></span>
+<span id="cb16-13"><a href="#cb16-13" tabindex="-1"></a>f_val <span class="ot">&lt;-</span> <span class="dv">5</span></span>
+<span id="cb16-14"><a href="#cb16-14" tabindex="-1"></a>sigma_val <span class="ot">&lt;-</span> <span class="dv">5</span></span>
+<span id="cb16-15"><a href="#cb16-15" tabindex="-1"></a></span>
+<span id="cb16-16"><a href="#cb16-16" tabindex="-1"></a><span class="co"># True beta</span></span>
+<span id="cb16-17"><a href="#cb16-17" tabindex="-1"></a>theta_func <span class="ot">&lt;-</span> <span class="cf">function</span>(p_val) {</span>
+<span id="cb16-18"><a href="#cb16-18" tabindex="-1"></a>  sgn <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="sc">-</span><span class="dv">1</span>), <span class="at">length.out =</span> p_val)</span>
+<span id="cb16-19"><a href="#cb16-19" tabindex="-1"></a>  mag <span class="ot">&lt;-</span> <span class="fu">ceiling</span>(<span class="fu">seq_len</span>(p_val) <span class="sc">/</span> <span class="dv">2</span>)</span>
+<span id="cb16-20"><a href="#cb16-20" tabindex="-1"></a>  sgn <span class="sc">*</span> mag</span>
+<span id="cb16-21"><a href="#cb16-21" tabindex="-1"></a>}</span>
+<span id="cb16-22"><a href="#cb16-22" tabindex="-1"></a></span>
+<span id="cb16-23"><a href="#cb16-23" tabindex="-1"></a>A <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">rnorm</span>(n_val <span class="sc">*</span> f_val), <span class="at">nrow =</span> n_val)  </span>
+<span id="cb16-24"><a href="#cb16-24" tabindex="-1"></a>Z <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">rnorm</span>(f_val <span class="sc">*</span> p_val), <span class="at">nrow =</span> f_val) </span>
+<span id="cb16-25"><a href="#cb16-25" tabindex="-1"></a>X <span class="ot">&lt;-</span> A <span class="sc">%*%</span> Z  <span class="co"># n x p matrix</span></span>
+<span id="cb16-26"><a href="#cb16-26" tabindex="-1"></a>noise <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">rnorm</span>(n_val <span class="sc">*</span> p_val, <span class="at">sd =</span> <span class="fu">sqrt</span>(<span class="dv">10</span><span class="sc">^</span>(<span class="sc">-</span><span class="dv">6</span>))), <span class="at">nrow =</span> n_val)</span>
+<span id="cb16-27"><a href="#cb16-27" tabindex="-1"></a>X_noisy <span class="ot">&lt;-</span> X <span class="sc">+</span> noise</span>
+<span id="cb16-28"><a href="#cb16-28" tabindex="-1"></a>X_intercept <span class="ot">&lt;-</span> <span class="fu">cbind</span>(<span class="fu">rep</span>(<span class="dv">1</span>, n_val), X_noisy)</span>
+<span id="cb16-29"><a href="#cb16-29" tabindex="-1"></a>beta_true <span class="ot">&lt;-</span> <span class="fu">theta_func</span>(p_val <span class="sc">+</span> <span class="dv">1</span>)</span>
+<span id="cb16-30"><a href="#cb16-30" tabindex="-1"></a>y <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(n_val,<span class="at">mean=</span><span class="fu">as.vector</span>(X_intercept<span class="sc">%*%</span>beta_true),<span class="at">sd=</span>sigma_val)</span>
+<span id="cb16-31"><a href="#cb16-31" tabindex="-1"></a></span>
+<span id="cb16-32"><a href="#cb16-32" tabindex="-1"></a><span class="co"># Fit models</span></span>
+<span id="cb16-33"><a href="#cb16-33" tabindex="-1"></a>OLS_results <span class="ot">&lt;-</span> <span class="fu">lm</span>(y<span class="sc">~</span>X_noisy)</span>
+<span id="cb16-34"><a href="#cb16-34" tabindex="-1"></a>beta_OLS <span class="ot">&lt;-</span> <span class="fu">coef</span>(OLS_results)</span>
+<span id="cb16-35"><a href="#cb16-35" tabindex="-1"></a></span>
+<span id="cb16-36"><a href="#cb16-36" tabindex="-1"></a>glmnet_fit <span class="ot">&lt;-</span> <span class="fu">cv.glmnet</span>(X_noisy, y, <span class="at">alpha =</span> <span class="dv">0</span>)</span>
+<span id="cb16-37"><a href="#cb16-37" tabindex="-1"></a>lambda_min_RR_glmnet <span class="ot">&lt;-</span> glmnet_fit<span class="sc">$</span>lambda.min</span>
+<span id="cb16-38"><a href="#cb16-38" tabindex="-1"></a>beta_RR <span class="ot">&lt;-</span> <span class="fu">as.vector</span>(<span class="fu">coef</span>(glmnet_fit, <span class="at">s =</span> <span class="st">&quot;lambda.min&quot;</span>))</span>
+<span id="cb16-39"><a href="#cb16-39" tabindex="-1"></a></span>
+<span id="cb16-40"><a href="#cb16-40" tabindex="-1"></a>SRR_results <span class="ot">&lt;-</span> <span class="fu">savvySh</span>(X_noisy, y, <span class="at">model_class =</span> <span class="st">&quot;ShrinkageRR&quot;</span>)</span>
+<span id="cb16-41"><a href="#cb16-41" tabindex="-1"></a>beta_SRR <span class="ot">&lt;-</span> <span class="fu">coef</span>(SRR_results, <span class="st">&quot;SRR&quot;</span>)</span></code></pre></div>
+<p>The tables below report the results of each estimator: the first
+table shows the <span class="math inline">\(L_2\)</span> distance
+between the estimated coefficient vector and the ground truth, while the
+second table displays the actual estimated coefficients (rounded) for
+each method alongside the true values.</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="co"># L2 comparison</span></span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a>l2_table <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a>  <span class="at">Method =</span> <span class="fu">c</span>(<span class="st">&quot;OLS&quot;</span>, <span class="st">&quot;RR&quot;</span>, <span class="st">&quot;SRR&quot;</span>),</span>
+<span id="cb17-4"><a href="#cb17-4" tabindex="-1"></a>  <span class="at">L2_Distance =</span> <span class="fu">c</span>(</span>
+<span id="cb17-5"><a href="#cb17-5" tabindex="-1"></a>     <span class="fu">sqrt</span>(<span class="fu">sum</span>((beta_OLS <span class="sc">-</span> beta_true)<span class="sc">^</span><span class="dv">2</span>)),</span>
+<span id="cb17-6"><a href="#cb17-6" tabindex="-1"></a>    <span class="fu">sqrt</span>(<span class="fu">sum</span>((beta_RR <span class="sc">-</span> beta_true)<span class="sc">^</span><span class="dv">2</span>)),</span>
+<span id="cb17-7"><a href="#cb17-7" tabindex="-1"></a>    <span class="fu">sqrt</span>(<span class="fu">sum</span>((beta_SRR  <span class="sc">-</span> beta_true)<span class="sc">^</span><span class="dv">2</span>))</span>
+<span id="cb17-8"><a href="#cb17-8" tabindex="-1"></a>  )</span>
+<span id="cb17-9"><a href="#cb17-9" tabindex="-1"></a>)</span>
+<span id="cb17-10"><a href="#cb17-10" tabindex="-1"></a><span class="fu">kable</span>(l2_table, <span class="at">digits =</span> <span class="dv">4</span>, <span class="at">caption =</span> <span class="st">&quot;L2 Distance Between Estimated and True Coefficients&quot;</span>)</span></code></pre></div>
+<table>
+<caption>L2 Distance Between Estimated and True Coefficients</caption>
+<thead>
+<tr class="header">
+<th align="left">Method</th>
+<th align="right">L2_Distance</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">OLS</td>
+<td align="right">313.7002</td>
+</tr>
+<tr class="even">
+<td align="left">RR</td>
+<td align="right">13.8878</td>
+</tr>
+<tr class="odd">
+<td align="left">SRR</td>
+<td align="right">9.0543</td>
+</tr>
+</tbody>
+</table>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a></span>
+<span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a><span class="co"># Coefficient comparison table</span></span>
+<span id="cb18-3"><a href="#cb18-3" tabindex="-1"></a>coef_table <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb18-4"><a href="#cb18-4" tabindex="-1"></a>  <span class="at">OLS =</span> <span class="fu">round</span>(beta_OLS, <span class="dv">3</span>),</span>
+<span id="cb18-5"><a href="#cb18-5" tabindex="-1"></a>  <span class="at">RR =</span> <span class="fu">round</span>(beta_RR, <span class="dv">3</span>),</span>
+<span id="cb18-6"><a href="#cb18-6" tabindex="-1"></a>  <span class="at">SRR =</span> <span class="fu">round</span>(beta_SRR, <span class="dv">3</span>),</span>
+<span id="cb18-7"><a href="#cb18-7" tabindex="-1"></a>  <span class="at">True =</span> <span class="fu">round</span>(beta_true, <span class="dv">3</span>)</span>
+<span id="cb18-8"><a href="#cb18-8" tabindex="-1"></a>)</span>
+<span id="cb18-9"><a href="#cb18-9" tabindex="-1"></a><span class="fu">kable</span>(coef_table, <span class="at">caption =</span> <span class="st">&quot;Estimated Coefficients by Method (rounded)&quot;</span>)</span></code></pre></div>
+<table>
+<caption>Estimated Coefficients by Method (rounded)</caption>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th align="right">OLS</th>
+<th align="right">RR</th>
+<th align="right">SRR</th>
+<th align="right">True</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">(Intercept)</td>
+<td align="right">1.010</td>
+<td align="right">1.011</td>
+<td align="right">1.007</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">X_noisy1</td>
+<td align="right">45.350</td>
+<td align="right">3.057</td>
+<td align="right">2.838</td>
+<td align="right">-1</td>
+</tr>
+<tr class="odd">
+<td align="left">X_noisy2</td>
+<td align="right">-4.960</td>
+<td align="right">-8.059</td>
+<td align="right">-2.278</td>
+<td align="right">2</td>
+</tr>
+<tr class="even">
+<td align="left">X_noisy3</td>
+<td align="right">147.454</td>
+<td align="right">-0.907</td>
+<td align="right">-0.780</td>
+<td align="right">-2</td>
+</tr>
+<tr class="odd">
+<td align="left">X_noisy4</td>
+<td align="right">42.069</td>
+<td align="right">2.850</td>
+<td align="right">4.477</td>
+<td align="right">3</td>
+</tr>
+<tr class="even">
+<td align="left">X_noisy5</td>
+<td align="right">-63.730</td>
+<td align="right">0.541</td>
+<td align="right">0.154</td>
+<td align="right">-3</td>
+</tr>
+<tr class="odd">
+<td align="left">X_noisy6</td>
+<td align="right">-186.510</td>
+<td align="right">1.760</td>
+<td align="right">1.627</td>
+<td align="right">4</td>
+</tr>
+<tr class="even">
+<td align="left">X_noisy7</td>
+<td align="right">118.817</td>
+<td align="right">0.063</td>
+<td align="right">-0.727</td>
+<td align="right">-4</td>
+</tr>
+<tr class="odd">
+<td align="left">X_noisy8</td>
+<td align="right">-17.079</td>
+<td align="right">2.482</td>
+<td align="right">3.598</td>
+<td align="right">5</td>
+</tr>
+<tr class="even">
+<td align="left">X_noisy9</td>
+<td align="right">-132.102</td>
+<td align="right">-0.035</td>
+<td align="right">-2.048</td>
+<td align="right">-5</td>
+</tr>
+<tr class="odd">
+<td align="left">X_noisy10</td>
+<td align="right">31.292</td>
+<td align="right">3.009</td>
+<td align="right">3.117</td>
+<td align="right">6</td>
+</tr>
+</tbody>
+</table>
+<hr />
+</div>
+</div>
+</div>
+<div id="real-data-analysis" class="section level1">
+<h1>Real Data Analysis</h1>
+<p>This section provides example code and references for applying the
+shrinkage estimators implemented in <code>savvySh</code> to real-world
+datasets. These applications demonstrate how shrinkage methods can be
+used in areas such as generalized linear models, portfolio investment,
+and fine-mapping in genetics. We do not run the code or present specific
+results here; instead, we offer clean, reproducible examples that users
+can adapt. Full details and preprocessing steps can be found in the
+relevant repositories or the <a href="https://openaccess.city.ac.uk/id/eprint/35005/">main
+paper</a>.</p>
+<ul>
+<li><p>The <strong>cybersickness dataset</strong> is used for
+illustrating shrinkage GLMs using a Poisson model. The main Shrinkage
+GLMs function is part of the related package <code>savvyGLM</code>, you
+can find <a href="https://github.com/Ziwei-ChenChen/savvyGLM">here</a>.</p></li>
+<li><p>The <strong>returns_441 dataset</strong> contains portfolio
+returns and is used for demonstrating shrinkage estimation in financial
+asset allocation.</p></li>
+<li><p>The <strong>Statistical Fine-Mapping Application</strong>
+demonstrates the use of shrinkage-based estimators in a genetic context.
+We do not provide detailed descriptions here, as the full R code and
+analysis—including data preparation and model fitting—are available
+at:<a href="https://github.com/jennasimit/flashfm-savvySh"><code>flashfm-savvySh</code></a>.</p></li>
+</ul>
+<div id="cybersickness-data" class="section level2">
+<h2>Cybersickness data</h2>
+<p>This example demonstrates how to apply Poisson GLMs and various
+shrinkage estimators to a dataset related to cybersickness severity
+scores. The response variable is ordinal and grouped into four
+categories. The goal is to predict this ordinal outcome using lagged
+predictors. Here we show how to preprocess, fit models, and evaluate
+prediction performance using metrics such as MSE, RMSE, and MAE.</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a>remotes<span class="sc">::</span><span class="fu">install_github</span>(<span class="st">&quot;Ziwei-ChenChen/savvyGLM&quot;</span>)</span>
+<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a><span class="fu">library</span>(savvyGLM)</span>
+<span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a><span class="fu">library</span>(savvySh)</span>
+<span id="cb19-4"><a href="#cb19-4" tabindex="-1"></a><span class="fu">library</span>(savvyGLM)</span>
+<span id="cb19-5"><a href="#cb19-5" tabindex="-1"></a><span class="fu">library</span>(MASS)</span>
+<span id="cb19-6"><a href="#cb19-6" tabindex="-1"></a></span>
+<span id="cb19-7"><a href="#cb19-7" tabindex="-1"></a>standardize_features<span class="ot">&lt;-</span><span class="cf">function</span>(dataset){  </span>
+<span id="cb19-8"><a href="#cb19-8" tabindex="-1"></a>  dataset[<span class="dv">2</span><span class="sc">:</span>(<span class="fu">ncol</span>(dataset)<span class="sc">-</span><span class="dv">1</span>)] <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(<span class="fu">scale</span>(dataset[<span class="dv">2</span><span class="sc">:</span>(<span class="fu">ncol</span>(dataset)<span class="sc">-</span><span class="dv">1</span>)])) </span>
+<span id="cb19-9"><a href="#cb19-9" tabindex="-1"></a>  <span class="fu">return</span>(dataset)</span>
+<span id="cb19-10"><a href="#cb19-10" tabindex="-1"></a>}</span>
+<span id="cb19-11"><a href="#cb19-11" tabindex="-1"></a></span>
+<span id="cb19-12"><a href="#cb19-12" tabindex="-1"></a>set_classes<span class="ot">&lt;-</span><span class="cf">function</span>(data){  </span>
+<span id="cb19-13"><a href="#cb19-13" tabindex="-1"></a>  data[,<span class="fu">ncol</span>(data)]<span class="ot">&lt;-</span><span class="fu">replace</span>(data[,<span class="fu">ncol</span>(data)], data[,<span class="fu">ncol</span>(data)]<span class="sc">&lt;</span><span class="dv">1</span>, <span class="dv">0</span>) </span>
+<span id="cb19-14"><a href="#cb19-14" tabindex="-1"></a>  data[,<span class="fu">ncol</span>(data)]<span class="ot">&lt;-</span><span class="fu">replace</span>(data[,<span class="fu">ncol</span>(data)], data[,<span class="fu">ncol</span>(data)] <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="fl">2.5</span>,<span class="dv">3</span>,<span class="fl">3.5</span>), <span class="dv">1</span>) </span>
+<span id="cb19-15"><a href="#cb19-15" tabindex="-1"></a>  data[,<span class="fu">ncol</span>(data)]<span class="ot">&lt;-</span><span class="fu">replace</span>(data[,<span class="fu">ncol</span>(data)], data[,<span class="fu">ncol</span>(data)] <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">6</span>), <span class="dv">2</span>) </span>
+<span id="cb19-16"><a href="#cb19-16" tabindex="-1"></a>  data[,<span class="fu">ncol</span>(data)]<span class="ot">&lt;-</span><span class="fu">replace</span>(data[,<span class="fu">ncol</span>(data)], data[,<span class="fu">ncol</span>(data)]<span class="sc">&gt;=</span><span class="dv">7</span>, <span class="dv">3</span>) </span>
+<span id="cb19-17"><a href="#cb19-17" tabindex="-1"></a>  <span class="fu">return</span>(data)</span>
+<span id="cb19-18"><a href="#cb19-18" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a>fit_and_return_coefficients <span class="ot">&lt;-</span> <span class="cf">function</span>(x, y) {</span>
+<span id="cb20-2"><a href="#cb20-2" tabindex="-1"></a>  </span>
+<span id="cb20-3"><a href="#cb20-3" tabindex="-1"></a>  control_list <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">maxit =</span> <span class="dv">200</span>, <span class="at">epsilon =</span> <span class="fl">1e-6</span>, <span class="at">trace =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb20-4"><a href="#cb20-4" tabindex="-1"></a>  family_type <span class="ot">&lt;-</span> <span class="fu">poisson</span>(<span class="at">link =</span> <span class="st">&quot;log&quot;</span>)</span>
+<span id="cb20-5"><a href="#cb20-5" tabindex="-1"></a>  </span>
+<span id="cb20-6"><a href="#cb20-6" tabindex="-1"></a>  <span class="co"># Fitting models</span></span>
+<span id="cb20-7"><a href="#cb20-7" tabindex="-1"></a>  opt_glm2_OLS <span class="ot">&lt;-</span> <span class="fu">glm.fit2</span>(x, y, <span class="at">family =</span> family_type, <span class="at">control =</span> control_list)</span>
+<span id="cb20-8"><a href="#cb20-8" tabindex="-1"></a>  opt_glm2_SR <span class="ot">&lt;-</span> <span class="fu">savvy_glm.fit2</span>(x, y, <span class="at">model_class =</span> <span class="st">&quot;SR&quot;</span>, <span class="at">family =</span> family_type, <span class="at">control =</span> control_list)</span>
+<span id="cb20-9"><a href="#cb20-9" tabindex="-1"></a>  opt_glm2_GSR <span class="ot">&lt;-</span> <span class="fu">savvy_glm.fit2</span>(x, y, <span class="at">model_class =</span> <span class="st">&quot;GSR&quot;</span>, <span class="at">family =</span> family_type, <span class="at">control =</span> control_list)</span>
+<span id="cb20-10"><a href="#cb20-10" tabindex="-1"></a>  opt_glm2_St <span class="ot">&lt;-</span> <span class="fu">savvy_glm.fit2</span>(x, y, <span class="at">model_class =</span> <span class="st">&quot;St&quot;</span>, <span class="at">family =</span> family_type, <span class="at">control =</span> control_list)</span>
+<span id="cb20-11"><a href="#cb20-11" tabindex="-1"></a>  opt_glm2_DSh <span class="ot">&lt;-</span> <span class="fu">savvy_glm.fit2</span>(x, y, <span class="at">model_class =</span> <span class="st">&quot;DSh&quot;</span>, <span class="at">family =</span> family_type, <span class="at">control =</span> control_list)</span>
+<span id="cb20-12"><a href="#cb20-12" tabindex="-1"></a>  opt_glm2_Sh <span class="ot">&lt;-</span> <span class="fu">savvy_glm.fit2</span>(x, y, <span class="at">model_class =</span> <span class="st">&quot;Sh&quot;</span>, <span class="at">family =</span> family_type, <span class="at">control =</span> control_list)</span>
+<span id="cb20-13"><a href="#cb20-13" tabindex="-1"></a>  </span>
+<span id="cb20-14"><a href="#cb20-14" tabindex="-1"></a>  <span class="fu">return</span>(<span class="fu">list</span>(</span>
+<span id="cb20-15"><a href="#cb20-15" tabindex="-1"></a>    <span class="at">glm2_OLS_result =</span> opt_glm2_OLS<span class="sc">$</span>coefficients,</span>
+<span id="cb20-16"><a href="#cb20-16" tabindex="-1"></a>    <span class="at">glm2_SR_result =</span> opt_glm2_SR<span class="sc">$</span>coefficients,</span>
+<span id="cb20-17"><a href="#cb20-17" tabindex="-1"></a>    <span class="at">glm2_GSR_result =</span> opt_glm2_GSR<span class="sc">$</span>coefficients,</span>
+<span id="cb20-18"><a href="#cb20-18" tabindex="-1"></a>    <span class="at">glm2_St_result =</span> opt_glm2_St<span class="sc">$</span>coefficients,</span>
+<span id="cb20-19"><a href="#cb20-19" tabindex="-1"></a>    <span class="at">glm2_DSh_result =</span> opt_glm2_DSh<span class="sc">$</span>coefficients,</span>
+<span id="cb20-20"><a href="#cb20-20" tabindex="-1"></a>    <span class="at">glm2_Sh_result =</span> opt_glm2_Sh<span class="sc">$</span>coefficients</span>
+<span id="cb20-21"><a href="#cb20-21" tabindex="-1"></a>  ))</span>
+<span id="cb20-22"><a href="#cb20-22" tabindex="-1"></a>}</span>
+<span id="cb20-23"><a href="#cb20-23" tabindex="-1"></a></span>
+<span id="cb20-24"><a href="#cb20-24" tabindex="-1"></a>test_model <span class="ot">&lt;-</span> <span class="cf">function</span>(glm_coefficients, data_X, data_Y) {</span>
+<span id="cb20-25"><a href="#cb20-25" tabindex="-1"></a>  upper_limit <span class="ot">&lt;-</span> <span class="dv">3</span>  <span class="co"># =3 for 4 classes; =9 for 10 classes</span></span>
+<span id="cb20-26"><a href="#cb20-26" tabindex="-1"></a>  </span>
+<span id="cb20-27"><a href="#cb20-27" tabindex="-1"></a>  <span class="do">### Model 1 ---&gt; OLS </span><span class="al">###</span></span>
+<span id="cb20-28"><a href="#cb20-28" tabindex="-1"></a>  predicted_glm2_OLS <span class="ot">&lt;-</span> <span class="fu">floor</span>(<span class="fu">exp</span>(data_X <span class="sc">%*%</span> <span class="fu">as.matrix</span>(glm_coefficients<span class="sc">$</span>glm2_OLS_result)))</span>
+<span id="cb20-29"><a href="#cb20-29" tabindex="-1"></a>  predicted_glm2_OLS <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(predicted_glm2_OLS <span class="sc">&lt;=</span> upper_limit, predicted_glm2_OLS, upper_limit)</span>
+<span id="cb20-30"><a href="#cb20-30" tabindex="-1"></a>  </span>
+<span id="cb20-31"><a href="#cb20-31" tabindex="-1"></a>  <span class="do">### Model 2 ---&gt; SR </span><span class="al">###</span></span>
+<span id="cb20-32"><a href="#cb20-32" tabindex="-1"></a>  predicted_glm2_SR <span class="ot">&lt;-</span> <span class="fu">floor</span>(<span class="fu">exp</span>(data_X <span class="sc">%*%</span> <span class="fu">as.matrix</span>(glm_coefficients<span class="sc">$</span>glm2_SR_result)))</span>
+<span id="cb20-33"><a href="#cb20-33" tabindex="-1"></a>  predicted_glm2_SR <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(predicted_glm2_SR <span class="sc">&lt;=</span> upper_limit, predicted_glm2_SR, upper_limit)</span>
+<span id="cb20-34"><a href="#cb20-34" tabindex="-1"></a>  </span>
+<span id="cb20-35"><a href="#cb20-35" tabindex="-1"></a>  <span class="do">### Model 3 ---&gt; GSR </span><span class="al">###</span></span>
+<span id="cb20-36"><a href="#cb20-36" tabindex="-1"></a>  predicted_glm2_GSR <span class="ot">&lt;-</span> <span class="fu">floor</span>(<span class="fu">exp</span>(data_X <span class="sc">%*%</span> <span class="fu">as.matrix</span>(glm_coefficients<span class="sc">$</span>glm2_GSR_result)))</span>
+<span id="cb20-37"><a href="#cb20-37" tabindex="-1"></a>  predicted_glm2_GSR <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(predicted_glm2_GSR <span class="sc">&lt;=</span> upper_limit, predicted_glm2_GSR, upper_limit)</span>
+<span id="cb20-38"><a href="#cb20-38" tabindex="-1"></a>  </span>
+<span id="cb20-39"><a href="#cb20-39" tabindex="-1"></a>  <span class="do">### Model 4 ---&gt; Stein </span><span class="al">###</span></span>
+<span id="cb20-40"><a href="#cb20-40" tabindex="-1"></a>  predicted_glm2_St <span class="ot">&lt;-</span> <span class="fu">floor</span>(<span class="fu">exp</span>(data_X <span class="sc">%*%</span> <span class="fu">as.matrix</span>(glm_coefficients<span class="sc">$</span>glm2_St_result)))</span>
+<span id="cb20-41"><a href="#cb20-41" tabindex="-1"></a>  predicted_glm2_St <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(predicted_glm2_St <span class="sc">&lt;=</span> upper_limit, predicted_glm2_St, upper_limit)</span>
+<span id="cb20-42"><a href="#cb20-42" tabindex="-1"></a>  </span>
+<span id="cb20-43"><a href="#cb20-43" tabindex="-1"></a>  <span class="do">### Model 5 ---&gt; Diagonal Shrinkage </span><span class="al">###</span></span>
+<span id="cb20-44"><a href="#cb20-44" tabindex="-1"></a>  predicted_glm2_DSh <span class="ot">&lt;-</span> <span class="fu">floor</span>(<span class="fu">exp</span>(data_X <span class="sc">%*%</span> <span class="fu">as.matrix</span>(glm_coefficients<span class="sc">$</span>glm2_DSh_result)))</span>
+<span id="cb20-45"><a href="#cb20-45" tabindex="-1"></a>  predicted_glm2_DSh <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(predicted_glm2_DSh <span class="sc">&lt;=</span> upper_limit, predicted_glm2_DSh, upper_limit)</span>
+<span id="cb20-46"><a href="#cb20-46" tabindex="-1"></a>  </span>
+<span id="cb20-47"><a href="#cb20-47" tabindex="-1"></a>  <span class="do">### Model 6 ---&gt; Sh </span><span class="al">###</span></span>
+<span id="cb20-48"><a href="#cb20-48" tabindex="-1"></a>  predicted_glm2_Sh <span class="ot">&lt;-</span> <span class="fu">floor</span>(<span class="fu">exp</span>(data_X <span class="sc">%*%</span> <span class="fu">as.matrix</span>(glm_coefficients<span class="sc">$</span>glm2_Sh_result)))</span>
+<span id="cb20-49"><a href="#cb20-49" tabindex="-1"></a>  predicted_glm2_Sh <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(predicted_glm2_Sh <span class="sc">&lt;=</span> upper_limit, predicted_glm2_Sh, upper_limit)</span>
+<span id="cb20-50"><a href="#cb20-50" tabindex="-1"></a>  </span>
+<span id="cb20-51"><a href="#cb20-51" tabindex="-1"></a>  <span class="fu">print</span>(<span class="fu">max</span>(predicted_glm2_OLS))</span>
+<span id="cb20-52"><a href="#cb20-52" tabindex="-1"></a>  <span class="fu">print</span>(<span class="fu">max</span>(predicted_glm2_SR))</span>
+<span id="cb20-53"><a href="#cb20-53" tabindex="-1"></a>  </span>
+<span id="cb20-54"><a href="#cb20-54" tabindex="-1"></a>  r_OLS <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fu">mse</span>(data_Y, predicted_glm2_OLS), <span class="fu">rmse</span>(data_Y, predicted_glm2_OLS), <span class="fu">mae</span>(data_Y, predicted_glm2_OLS))</span>
+<span id="cb20-55"><a href="#cb20-55" tabindex="-1"></a>  r_SR <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fu">mse</span>(data_Y, predicted_glm2_SR), <span class="fu">rmse</span>(data_Y, predicted_glm2_SR), <span class="fu">mae</span>(data_Y, predicted_glm2_SR))</span>
+<span id="cb20-56"><a href="#cb20-56" tabindex="-1"></a>  r_GSR <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fu">mse</span>(data_Y, predicted_glm2_GSR), <span class="fu">rmse</span>(data_Y, predicted_glm2_GSR), <span class="fu">mae</span>(data_Y, predicted_glm2_GSR))</span>
+<span id="cb20-57"><a href="#cb20-57" tabindex="-1"></a>  r_St <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fu">mse</span>(data_Y, predicted_glm2_St), <span class="fu">rmse</span>(data_Y, predicted_glm2_St), <span class="fu">mae</span>(data_Y, predicted_glm2_St))</span>
+<span id="cb20-58"><a href="#cb20-58" tabindex="-1"></a>  r_DSh <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fu">mse</span>(data_Y, predicted_glm2_DSh), <span class="fu">rmse</span>(data_Y, predicted_glm2_DSh), <span class="fu">mae</span>(data_Y, predicted_glm2_DSh))</span>
+<span id="cb20-59"><a href="#cb20-59" tabindex="-1"></a>  r_Sh <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fu">mse</span>(data_Y, predicted_glm2_Sh), <span class="fu">rmse</span>(data_Y, predicted_glm2_Sh), <span class="fu">mae</span>(data_Y, predicted_glm2_Sh))</span>
+<span id="cb20-60"><a href="#cb20-60" tabindex="-1"></a>  </span>
+<span id="cb20-61"><a href="#cb20-61" tabindex="-1"></a>  <span class="fu">return</span>(<span class="fu">list</span>(</span>
+<span id="cb20-62"><a href="#cb20-62" tabindex="-1"></a>    <span class="at">results_OLS =</span> r_OLS,</span>
+<span id="cb20-63"><a href="#cb20-63" tabindex="-1"></a>    <span class="at">results_SR =</span> r_SR,</span>
+<span id="cb20-64"><a href="#cb20-64" tabindex="-1"></a>    <span class="at">results_GSR =</span> r_GSR,</span>
+<span id="cb20-65"><a href="#cb20-65" tabindex="-1"></a>    <span class="at">results_St =</span> r_St,</span>
+<span id="cb20-66"><a href="#cb20-66" tabindex="-1"></a>    <span class="at">results_DSh =</span> r_DSh,</span>
+<span id="cb20-67"><a href="#cb20-67" tabindex="-1"></a>    <span class="at">results_Sh =</span> r_Sh</span>
+<span id="cb20-68"><a href="#cb20-68" tabindex="-1"></a>  ))</span>
+<span id="cb20-69"><a href="#cb20-69" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a>out_of_sample_performance <span class="ot">&lt;-</span> <span class="cf">function</span>(<span class="at">percentage =</span> <span class="fl">0.3</span>, <span class="at">no_trials =</span> <span class="dv">50</span>, <span class="at">filein =</span> <span class="st">&quot;data_for_regression10.csv&quot;</span>, <span class="at">fileout =</span> <span class="st">&quot;results10.csv&quot;</span>) {</span>
+<span id="cb21-2"><a href="#cb21-2" tabindex="-1"></a>  </span>
+<span id="cb21-3"><a href="#cb21-3" tabindex="-1"></a>  data <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(filein)</span>
+<span id="cb21-4"><a href="#cb21-4" tabindex="-1"></a>  agregated_results<span class="ot">&lt;-</span><span class="fu">rep</span>(<span class="dv">0</span>,<span class="dv">4</span><span class="sc">*</span><span class="dv">3</span>)</span>
+<span id="cb21-5"><a href="#cb21-5" tabindex="-1"></a>  </span>
+<span id="cb21-6"><a href="#cb21-6" tabindex="-1"></a>  data<span class="ot">&lt;-</span><span class="fu">set_classes</span>(data)   <span class="co"># for 4 classes</span></span>
+<span id="cb21-7"><a href="#cb21-7" tabindex="-1"></a>  <span class="co">#data[,ncol(data)]&lt;-floor(data[,ncol(data)])  # for 10 classes -- the scores 2.5 and 3.5 are floored</span></span>
+<span id="cb21-8"><a href="#cb21-8" tabindex="-1"></a>  </span>
+<span id="cb21-9"><a href="#cb21-9" tabindex="-1"></a>  data<span class="ot">&lt;-</span><span class="fu">standardize_features</span>(data)</span>
+<span id="cb21-10"><a href="#cb21-10" tabindex="-1"></a>  </span>
+<span id="cb21-11"><a href="#cb21-11" tabindex="-1"></a>  <span class="cf">for</span> (r <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>no_trials){</span>
+<span id="cb21-12"><a href="#cb21-12" tabindex="-1"></a>    <span class="co">#for train-test split with percentage e.g. 70-30</span></span>
+<span id="cb21-13"><a href="#cb21-13" tabindex="-1"></a>    bound <span class="ot">&lt;-</span> <span class="fu">floor</span>(<span class="fu">nrow</span>(data)<span class="sc">*</span>(<span class="dv">1</span><span class="sc">-</span>percentage)) <span class="co">#define % of training</span></span>
+<span id="cb21-14"><a href="#cb21-14" tabindex="-1"></a>    data <span class="ot">&lt;-</span> data[<span class="fu">sample</span>(<span class="fu">nrow</span>(data)), ]           <span class="co">#sample rows </span></span>
+<span id="cb21-15"><a href="#cb21-15" tabindex="-1"></a>    train <span class="ot">&lt;-</span> data[<span class="dv">1</span><span class="sc">:</span>bound, ]            </span>
+<span id="cb21-16"><a href="#cb21-16" tabindex="-1"></a>    test <span class="ot">&lt;-</span> data[(bound<span class="sc">+</span><span class="dv">1</span>)<span class="sc">:</span><span class="fu">nrow</span>(data), ]</span>
+<span id="cb21-17"><a href="#cb21-17" tabindex="-1"></a>    </span>
+<span id="cb21-18"><a href="#cb21-18" tabindex="-1"></a>    <span class="co">#training</span></span>
+<span id="cb21-19"><a href="#cb21-19" tabindex="-1"></a>    X.tilde <span class="ot">&lt;-</span> train[,<span class="sc">-</span><span class="fu">ncol</span>(train)]</span>
+<span id="cb21-20"><a href="#cb21-20" tabindex="-1"></a>    X <span class="ot">&lt;-</span>  X.tilde[,<span class="sc">-</span><span class="dv">1</span>]</span>
+<span id="cb21-21"><a href="#cb21-21" tabindex="-1"></a>    train_X <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(train[,<span class="sc">-</span><span class="fu">ncol</span>(train)])</span>
+<span id="cb21-22"><a href="#cb21-22" tabindex="-1"></a>    train_Y <span class="ot">&lt;-</span>  train[,<span class="fu">ncol</span>(train)]</span>
+<span id="cb21-23"><a href="#cb21-23" tabindex="-1"></a>    glm_coefficients<span class="ot">&lt;-</span><span class="fu">fit_and_return_coefficients</span>(train_X, train_Y)</span>
+<span id="cb21-24"><a href="#cb21-24" tabindex="-1"></a>    </span>
+<span id="cb21-25"><a href="#cb21-25" tabindex="-1"></a>    <span class="co">#test</span></span>
+<span id="cb21-26"><a href="#cb21-26" tabindex="-1"></a>    test_X <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(test[,<span class="sc">-</span><span class="fu">ncol</span>(test)])</span>
+<span id="cb21-27"><a href="#cb21-27" tabindex="-1"></a>    test_Y <span class="ot">&lt;-</span>  <span class="fu">as.matrix</span>(test[,<span class="fu">ncol</span>(test)])</span>
+<span id="cb21-28"><a href="#cb21-28" tabindex="-1"></a>    results<span class="ot">&lt;-</span><span class="fu">test_model</span>(glm_coefficients, test_X, test_Y)</span>
+<span id="cb21-29"><a href="#cb21-29" tabindex="-1"></a>    agregated_results<span class="ot">&lt;-</span>agregated_results<span class="sc">+</span><span class="fu">unlist</span>(results)</span>
+<span id="cb21-30"><a href="#cb21-30" tabindex="-1"></a>  }</span>
+<span id="cb21-31"><a href="#cb21-31" tabindex="-1"></a>  </span>
+<span id="cb21-32"><a href="#cb21-32" tabindex="-1"></a>  <span class="co"># Average results over trials</span></span>
+<span id="cb21-33"><a href="#cb21-33" tabindex="-1"></a>  aggregated_results <span class="ot">&lt;-</span> aggregated_results <span class="sc">/</span> no_trials</span>
+<span id="cb21-34"><a href="#cb21-34" tabindex="-1"></a>  df <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="fu">matrix</span>(<span class="fu">unlist</span>(agregated_results), <span class="at">nrow=</span><span class="fu">length</span>(results), <span class="at">byrow=</span><span class="cn">TRUE</span>))</span>
+<span id="cb21-35"><a href="#cb21-35" tabindex="-1"></a>  <span class="fu">colnames</span>(df) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;MSE&quot;</span>, <span class="st">&quot;RMSE&quot;</span>, <span class="st">&quot;MAE&quot;</span>)</span>
+<span id="cb21-36"><a href="#cb21-36" tabindex="-1"></a>  <span class="fu">rownames</span>(df) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;GLM2&quot;</span>, <span class="st">&quot;SR&quot;</span>, <span class="st">&quot;GSR&quot;</span>, <span class="st">&quot;St&quot;</span>, <span class="st">&quot;DSh&quot;</span>, <span class="st">&quot;Sh&quot;</span>)</span>
+<span id="cb21-37"><a href="#cb21-37" tabindex="-1"></a>  <span class="fu">write.csv</span>(df, fileout)</span>
+<span id="cb21-38"><a href="#cb21-38" tabindex="-1"></a>}</span>
+<span id="cb21-39"><a href="#cb21-39" tabindex="-1"></a></span>
+<span id="cb21-40"><a href="#cb21-40" tabindex="-1"></a>input_file_path <span class="ot">&lt;-</span> <span class="st">&quot;data_for_regression10.csv&quot;</span></span>
+<span id="cb21-41"><a href="#cb21-41" tabindex="-1"></a>output_file_path <span class="ot">&lt;-</span> <span class="st">&quot;results10.csv&quot;</span></span>
+<span id="cb21-42"><a href="#cb21-42" tabindex="-1"></a>run_performance_test <span class="ot">&lt;-</span> <span class="fu">out_of_sample_performance</span>(</span>
+<span id="cb21-43"><a href="#cb21-43" tabindex="-1"></a>  <span class="at">percentage =</span> <span class="fl">0.3</span>,        </span>
+<span id="cb21-44"><a href="#cb21-44" tabindex="-1"></a>  <span class="at">no_trials =</span> <span class="dv">50</span>,            </span>
+<span id="cb21-45"><a href="#cb21-45" tabindex="-1"></a>  <span class="at">filein =</span> input_file_path,  </span>
+<span id="cb21-46"><a href="#cb21-46" tabindex="-1"></a>  <span class="at">fileout =</span> output_file_path </span>
+<span id="cb21-47"><a href="#cb21-47" tabindex="-1"></a>)</span></code></pre></div>
+</div>
+<div id="portfolio-investment" class="section level2">
+<h2>Portfolio Investment</h2>
+<p>This second example applies shrinkage methods to asset return data
+for constructing optimal portfolios. We use the <code>returns_441</code>
+dataset. The dataset consists of daily returns for 441 stocks including
+the index, with <code>Date</code> formatted as <code>YYYYMMDD</code>.
+For each rolling window, we:</p>
+<ul>
+<li><p>Fit multiple regression-based models (OLS, RR, POET_99%, St, DSh,
+Sh, SR, GSR, SRR).</p></li>
+<li><p>Extract the estimated coefficients and compute portfolio
+weights.</p></li>
+<li><p>Simulate out-of-sample portfolio performance.</p></li>
+<li><p>Compute rolling statistics: expected annual returns, volatility,
+and Sharpe ratios.</p></li>
+</ul>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" tabindex="-1"></a><span class="fu">library</span>(savvySh)</span>
+<span id="cb22-2"><a href="#cb22-2" tabindex="-1"></a><span class="fu">library</span>(MASS)</span>
+<span id="cb22-3"><a href="#cb22-3" tabindex="-1"></a><span class="fu">library</span>(glmnet)</span>
+<span id="cb22-4"><a href="#cb22-4" tabindex="-1"></a><span class="fu">library</span>(PerformanceAnalytics)</span>
+<span id="cb22-5"><a href="#cb22-5" tabindex="-1"></a><span class="fu">library</span>(lubridate)</span>
+<span id="cb22-6"><a href="#cb22-6" tabindex="-1"></a><span class="fu">library</span>(quadprog)</span>
+<span id="cb22-7"><a href="#cb22-7" tabindex="-1"></a><span class="fu">library</span>(xts)</span>
+<span id="cb22-8"><a href="#cb22-8" tabindex="-1"></a><span class="fu">library</span>(POET)</span>
+<span id="cb22-9"><a href="#cb22-9" tabindex="-1"></a></span>
+<span id="cb22-10"><a href="#cb22-10" tabindex="-1"></a>data <span class="ot">&lt;-</span> returns_441</span>
+<span id="cb22-11"><a href="#cb22-11" tabindex="-1"></a>data<span class="sc">$</span>Date <span class="ot">&lt;-</span> <span class="fu">as.Date</span>(<span class="fu">as.character</span>(data<span class="sc">$</span>Date), <span class="at">format =</span> <span class="st">&quot;%Y%m%d&quot;</span>)</span>
+<span id="cb22-12"><a href="#cb22-12" tabindex="-1"></a><span class="fu">colnames</span>(data)[<span class="dv">2</span><span class="sc">:</span><span class="dv">442</span>] <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;Company&quot;</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">441</span>)</span>
+<span id="cb22-13"><a href="#cb22-13" tabindex="-1"></a></span>
+<span id="cb22-14"><a href="#cb22-14" tabindex="-1"></a>training_size <span class="ot">&lt;-</span> <span class="dv">5</span> <span class="sc">*</span> <span class="dv">252</span>  </span>
+<span id="cb22-15"><a href="#cb22-15" tabindex="-1"></a>testing_size  <span class="ot">&lt;-</span> <span class="dv">3</span> <span class="sc">*</span> <span class="dv">21</span>  </span>
+<span id="cb22-16"><a href="#cb22-16" tabindex="-1"></a>step_size <span class="ot">&lt;-</span> <span class="dv">3</span> <span class="sc">*</span> <span class="dv">21</span>   </span>
+<span id="cb22-17"><a href="#cb22-17" tabindex="-1"></a>n_total <span class="ot">&lt;-</span> <span class="fu">nrow</span>(data)</span>
+<span id="cb22-18"><a href="#cb22-18" tabindex="-1"></a>max_windows <span class="ot">&lt;-</span> <span class="fu">floor</span>((n_total <span class="sc">-</span> training_size <span class="sc">-</span> testing_size) <span class="sc">/</span> step_size) <span class="sc">+</span> <span class="dv">1</span></span>
+<span id="cb22-19"><a href="#cb22-19" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Total rows:&quot;</span>, n_total, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb22-20"><a href="#cb22-20" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Max windows:&quot;</span>, max_windows, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb22-21"><a href="#cb22-21" tabindex="-1"></a></span>
+<span id="cb22-22"><a href="#cb22-22" tabindex="-1"></a>get_full_weights <span class="ot">&lt;-</span> <span class="cf">function</span>(est_vector) {</span>
+<span id="cb22-23"><a href="#cb22-23" tabindex="-1"></a>  w <span class="ot">&lt;-</span> est_vector[<span class="sc">-</span><span class="dv">1</span>]      </span>
+<span id="cb22-24"><a href="#cb22-24" tabindex="-1"></a>  w_last <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="sc">-</span> <span class="fu">sum</span>(w)    </span>
+<span id="cb22-25"><a href="#cb22-25" tabindex="-1"></a>  <span class="fu">return</span>(<span class="fu">c</span>(w, w_last))</span>
+<span id="cb22-26"><a href="#cb22-26" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" tabindex="-1"></a>poet_est_99 <span class="ot">&lt;-</span> <span class="cf">function</span>(x, y) {</span>
+<span id="cb23-2"><a href="#cb23-2" tabindex="-1"></a>  x <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(x)</span>
+<span id="cb23-3"><a href="#cb23-3" tabindex="-1"></a>  y <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(y)</span>
+<span id="cb23-4"><a href="#cb23-4" tabindex="-1"></a>  n <span class="ot">&lt;-</span> <span class="fu">nrow</span>(x)</span>
+<span id="cb23-5"><a href="#cb23-5" tabindex="-1"></a>  p <span class="ot">&lt;-</span> <span class="fu">ncol</span>(x)</span>
+<span id="cb23-6"><a href="#cb23-6" tabindex="-1"></a>  </span>
+<span id="cb23-7"><a href="#cb23-7" tabindex="-1"></a>  x_mean <span class="ot">&lt;-</span> <span class="fu">colMeans</span>(x)</span>
+<span id="cb23-8"><a href="#cb23-8" tabindex="-1"></a>  y_mean <span class="ot">&lt;-</span> <span class="fu">mean</span>(y)</span>
+<span id="cb23-9"><a href="#cb23-9" tabindex="-1"></a>  x_c <span class="ot">&lt;-</span> x <span class="sc">-</span> <span class="fu">matrix</span>(<span class="fu">rep</span>(x_mean, <span class="at">each =</span> n), n, p)</span>
+<span id="cb23-10"><a href="#cb23-10" tabindex="-1"></a>  y_c <span class="ot">&lt;-</span> y <span class="sc">-</span> y_mean</span>
+<span id="cb23-11"><a href="#cb23-11" tabindex="-1"></a>  Y<span class="ot">=</span><span class="fu">t</span>(x_c)</span>
+<span id="cb23-12"><a href="#cb23-12" tabindex="-1"></a>  </span>
+<span id="cb23-13"><a href="#cb23-13" tabindex="-1"></a>  <span class="co"># Choose K to explain 99% variance</span></span>
+<span id="cb23-14"><a href="#cb23-14" tabindex="-1"></a>  eigvals <span class="ot">&lt;-</span> <span class="fu">eigen</span>(<span class="fu">cov</span>(x_c), <span class="at">symmetric =</span> <span class="cn">TRUE</span>, <span class="at">only.values =</span> <span class="cn">TRUE</span>)<span class="sc">$</span>values</span>
+<span id="cb23-15"><a href="#cb23-15" tabindex="-1"></a>  eigvals_sorted <span class="ot">&lt;-</span> <span class="fu">sort</span>(eigvals, <span class="at">decreasing =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb23-16"><a href="#cb23-16" tabindex="-1"></a>  cumsum_vals <span class="ot">&lt;-</span> <span class="fu">cumsum</span>(eigvals_sorted) <span class="sc">/</span> <span class="fu">sum</span>(eigvals_sorted)</span>
+<span id="cb23-17"><a href="#cb23-17" tabindex="-1"></a>  K <span class="ot">&lt;-</span> <span class="fu">which</span>(cumsum_vals <span class="sc">&gt;=</span> <span class="fl">0.99</span>)[<span class="dv">1</span>]</span>
+<span id="cb23-18"><a href="#cb23-18" tabindex="-1"></a>  poet_result <span class="ot">&lt;-</span> POET<span class="sc">::</span><span class="fu">POET</span>(Y, <span class="at">K =</span> K)</span>
+<span id="cb23-19"><a href="#cb23-19" tabindex="-1"></a>  Sigma_hat <span class="ot">&lt;-</span> poet_result<span class="sc">$</span>SigmaY</span>
+<span id="cb23-20"><a href="#cb23-20" tabindex="-1"></a>  </span>
+<span id="cb23-21"><a href="#cb23-21" tabindex="-1"></a>  xcyc <span class="ot">&lt;-</span> <span class="fu">crossprod</span>(x_c, y_c) <span class="sc">/</span> n</span>
+<span id="cb23-22"><a href="#cb23-22" tabindex="-1"></a>  beta_1p <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(<span class="fu">solve</span>(Sigma_hat, xcyc))</span>
+<span id="cb23-23"><a href="#cb23-23" tabindex="-1"></a>  beta_0 <span class="ot">&lt;-</span> y_mean <span class="sc">-</span> <span class="fu">sum</span>(x_mean <span class="sc">*</span> beta_1p)</span>
+<span id="cb23-24"><a href="#cb23-24" tabindex="-1"></a>  beta_full <span class="ot">&lt;-</span> <span class="fu">c</span>(beta_0, beta_1p)</span>
+<span id="cb23-25"><a href="#cb23-25" tabindex="-1"></a>  </span>
+<span id="cb23-26"><a href="#cb23-26" tabindex="-1"></a>  <span class="fu">return</span>(<span class="fu">as.vector</span>(beta_full))</span>
+<span id="cb23-27"><a href="#cb23-27" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" tabindex="-1"></a>rolling_annual_expected_returns <span class="ot">&lt;-</span> <span class="fu">data.frame</span>()</span>
+<span id="cb24-2"><a href="#cb24-2" tabindex="-1"></a>rolling_annual_sharpe_ratios <span class="ot">&lt;-</span> <span class="fu">data.frame</span>()</span>
+<span id="cb24-3"><a href="#cb24-3" tabindex="-1"></a>rolling_annual_volatilities <span class="ot">&lt;-</span> <span class="fu">data.frame</span>()</span>
+<span id="cb24-4"><a href="#cb24-4" tabindex="-1"></a></span>
+<span id="cb24-5"><a href="#cb24-5" tabindex="-1"></a><span class="cf">for</span> (window_index <span class="cf">in</span> <span class="fu">seq_len</span>(max_windows)) {</span>
+<span id="cb24-6"><a href="#cb24-6" tabindex="-1"></a>  start_index <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="sc">+</span> (window_index <span class="sc">-</span> <span class="dv">1</span>) <span class="sc">*</span> step_size</span>
+<span id="cb24-7"><a href="#cb24-7" tabindex="-1"></a>  train_start <span class="ot">&lt;-</span> start_index</span>
+<span id="cb24-8"><a href="#cb24-8" tabindex="-1"></a>  train_end <span class="ot">&lt;-</span> start_index <span class="sc">+</span> training_size <span class="sc">-</span> <span class="dv">1</span></span>
+<span id="cb24-9"><a href="#cb24-9" tabindex="-1"></a>  test_start <span class="ot">&lt;-</span> train_end <span class="sc">+</span> <span class="dv">1</span></span>
+<span id="cb24-10"><a href="#cb24-10" tabindex="-1"></a>  test_end <span class="ot">&lt;-</span> train_end <span class="sc">+</span> testing_size</span>
+<span id="cb24-11"><a href="#cb24-11" tabindex="-1"></a></span>
+<span id="cb24-12"><a href="#cb24-12" tabindex="-1"></a>  train_data <span class="ot">&lt;-</span> data[train_start<span class="sc">:</span>train_end, ]</span>
+<span id="cb24-13"><a href="#cb24-13" tabindex="-1"></a>  test_data <span class="ot">&lt;-</span> data[test_start<span class="sc">:</span>test_end, ]</span>
+<span id="cb24-14"><a href="#cb24-14" tabindex="-1"></a>  train_returns <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(train_data[, <span class="sc">-</span><span class="dv">1</span>])  </span>
+<span id="cb24-15"><a href="#cb24-15" tabindex="-1"></a>  test_returns <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(test_data[, <span class="sc">-</span><span class="dv">1</span>])  </span>
+<span id="cb24-16"><a href="#cb24-16" tabindex="-1"></a>  </span>
+<span id="cb24-17"><a href="#cb24-17" tabindex="-1"></a>  <span class="co"># Create X_train and Y_train</span></span>
+<span id="cb24-18"><a href="#cb24-18" tabindex="-1"></a>  <span class="co"># Y_train is last column (Company441)</span></span>
+<span id="cb24-19"><a href="#cb24-19" tabindex="-1"></a>  <span class="co"># X_train is (Y_train - first 440 columns)</span></span>
+<span id="cb24-20"><a href="#cb24-20" tabindex="-1"></a>  Y_train <span class="ot">&lt;-</span> train_returns[, <span class="dv">441</span>]</span>
+<span id="cb24-21"><a href="#cb24-21" tabindex="-1"></a>  X_train <span class="ot">&lt;-</span> <span class="fu">matrix</span>(Y_train, <span class="at">nrow =</span> <span class="fu">nrow</span>(train_returns), <span class="at">ncol =</span> <span class="dv">440</span>) <span class="sc">-</span> train_returns[, <span class="dv">1</span><span class="sc">:</span><span class="dv">440</span>]</span>
+<span id="cb24-22"><a href="#cb24-22" tabindex="-1"></a>  </span>
+<span id="cb24-23"><a href="#cb24-23" tabindex="-1"></a>  <span class="co"># Fit all estimators</span></span>
+<span id="cb24-24"><a href="#cb24-24" tabindex="-1"></a>  est_results <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb24-25"><a href="#cb24-25" tabindex="-1"></a>    <span class="at">OLS =</span> <span class="fu">OLS_est</span>(X_train, Y_train)<span class="sc">$</span>est,</span>
+<span id="cb24-26"><a href="#cb24-26" tabindex="-1"></a>    <span class="at">RR =</span> <span class="fu">RR_est</span>(X_train, Y_train)<span class="sc">$</span>est,</span>
+<span id="cb24-27"><a href="#cb24-27" tabindex="-1"></a>    <span class="at">POET_99 =</span> <span class="fu">poet_est_99</span>(X_train, Y_train),</span>
+<span id="cb24-28"><a href="#cb24-28" tabindex="-1"></a>    <span class="at">St =</span> <span class="fu">St_ost</span>(X_train, Y_train),</span>
+<span id="cb24-29"><a href="#cb24-29" tabindex="-1"></a>    <span class="at">DSh =</span> <span class="fu">DSh_ost</span>(X_train, Y_train),</span>
+<span id="cb24-30"><a href="#cb24-30" tabindex="-1"></a>    <span class="at">Sh =</span> <span class="fu">Sh_ost</span>(X_train, Y_train), </span>
+<span id="cb24-31"><a href="#cb24-31" tabindex="-1"></a>    <span class="at">SR =</span> <span class="fu">SR_ost</span>(X_train, Y_train),</span>
+<span id="cb24-32"><a href="#cb24-32" tabindex="-1"></a>    <span class="at">GSR =</span> <span class="fu">GSR_ost</span>(X_train, Y_train),</span>
+<span id="cb24-33"><a href="#cb24-33" tabindex="-1"></a>    <span class="at">SRR =</span> <span class="fu">SRR_shrinkage_ost</span>(X_train, Y_train)</span>
+<span id="cb24-34"><a href="#cb24-34" tabindex="-1"></a>  )</span>
+<span id="cb24-35"><a href="#cb24-35" tabindex="-1"></a>  weights_list <span class="ot">&lt;-</span> <span class="fu">lapply</span>(est_results, get_full_weights)</span>
+<span id="cb24-36"><a href="#cb24-36" tabindex="-1"></a>  <span class="fu">names</span>(weights_list) <span class="ot">&lt;-</span> <span class="fu">names</span>(est_results)</span>
+<span id="cb24-37"><a href="#cb24-37" tabindex="-1"></a>  </span>
+<span id="cb24-38"><a href="#cb24-38" tabindex="-1"></a>  test_dates <span class="ot">&lt;-</span> <span class="fu">as.Date</span>(test_data<span class="sc">$</span>Date)</span>
+<span id="cb24-39"><a href="#cb24-39" tabindex="-1"></a>  test_returns_xts <span class="ot">&lt;-</span> <span class="fu">xts</span>(test_returns, <span class="at">order.by =</span> test_dates)</span>
+<span id="cb24-40"><a href="#cb24-40" tabindex="-1"></a>  daily_returns_list <span class="ot">&lt;-</span> <span class="fu">lapply</span>(weights_list, <span class="cf">function</span>(w) {</span>
+<span id="cb24-41"><a href="#cb24-41" tabindex="-1"></a>    rp <span class="ot">&lt;-</span> <span class="fu">Return.portfolio</span>(<span class="at">R =</span> test_returns_xts, <span class="at">weights =</span> w)</span>
+<span id="cb24-42"><a href="#cb24-42" tabindex="-1"></a>    <span class="fu">return</span>(<span class="fu">as.numeric</span>(rp)) </span>
+<span id="cb24-43"><a href="#cb24-43" tabindex="-1"></a>  })</span>
+<span id="cb24-44"><a href="#cb24-44" tabindex="-1"></a>  daily_values_list <span class="ot">&lt;-</span> <span class="fu">lapply</span>(daily_returns_list, <span class="cf">function</span>(r) {</span>
+<span id="cb24-45"><a href="#cb24-45" tabindex="-1"></a>    cum_val <span class="ot">&lt;-</span> <span class="fu">cumprod</span>(<span class="dv">1</span> <span class="sc">+</span> r)</span>
+<span id="cb24-46"><a href="#cb24-46" tabindex="-1"></a>    <span class="fu">return</span>(cum_val)</span>
+<span id="cb24-47"><a href="#cb24-47" tabindex="-1"></a>  })</span>
+<span id="cb24-48"><a href="#cb24-48" tabindex="-1"></a>  </span>
+<span id="cb24-49"><a href="#cb24-49" tabindex="-1"></a>  model_names <span class="ot">&lt;-</span> <span class="fu">names</span>(daily_returns_list)</span>
+<span id="cb24-50"><a href="#cb24-50" tabindex="-1"></a>  n_test <span class="ot">&lt;-</span> <span class="fu">length</span>(test_start<span class="sc">:</span>test_end)</span>
+<span id="cb24-51"><a href="#cb24-51" tabindex="-1"></a>  daily_values_mat <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span>, <span class="at">nrow =</span> <span class="fu">length</span>(model_names), <span class="at">ncol =</span> n_test)</span>
+<span id="cb24-52"><a href="#cb24-52" tabindex="-1"></a>  daily_returns_mat <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span>, <span class="at">nrow =</span> <span class="fu">length</span>(model_names), <span class="at">ncol =</span> n_test)</span>
+<span id="cb24-53"><a href="#cb24-53" tabindex="-1"></a>  <span class="fu">rownames</span>(daily_values_mat) <span class="ot">&lt;-</span> model_names</span>
+<span id="cb24-54"><a href="#cb24-54" tabindex="-1"></a>  <span class="fu">rownames</span>(daily_returns_mat) <span class="ot">&lt;-</span> model_names</span>
+<span id="cb24-55"><a href="#cb24-55" tabindex="-1"></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="fu">seq_along</span>(model_names)) {</span>
+<span id="cb24-56"><a href="#cb24-56" tabindex="-1"></a>    daily_values_mat[i, ]  <span class="ot">&lt;-</span> daily_values_list[[i]]</span>
+<span id="cb24-57"><a href="#cb24-57" tabindex="-1"></a>    daily_returns_mat[i, ] <span class="ot">&lt;-</span> daily_returns_list[[i]]</span>
+<span id="cb24-58"><a href="#cb24-58" tabindex="-1"></a>  }</span>
+<span id="cb24-59"><a href="#cb24-59" tabindex="-1"></a>  </span>
+<span id="cb24-60"><a href="#cb24-60" tabindex="-1"></a>  returns_xts_mat <span class="ot">&lt;-</span> <span class="fu">xts</span>(<span class="fu">t</span>(daily_returns_mat), <span class="at">order.by =</span> test_dates)</span>
+<span id="cb24-61"><a href="#cb24-61" tabindex="-1"></a>  annual_returns <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(<span class="fu">Return.annualized</span>(<span class="at">R =</span> returns_xts_mat, <span class="at">scale =</span> <span class="dv">252</span>))</span>
+<span id="cb24-62"><a href="#cb24-62" tabindex="-1"></a>  <span class="fu">names</span>(annual_returns) <span class="ot">&lt;-</span> <span class="fu">colnames</span>(returns_xts_mat)</span>
+<span id="cb24-63"><a href="#cb24-63" tabindex="-1"></a>  annual_vols <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(<span class="fu">StdDev.annualized</span>(<span class="at">x =</span> returns_xts_mat, <span class="at">scale =</span> <span class="dv">252</span>))</span>
+<span id="cb24-64"><a href="#cb24-64" tabindex="-1"></a>  <span class="fu">names</span>(annual_vols) <span class="ot">&lt;-</span> <span class="fu">colnames</span>(returns_xts_mat)</span>
+<span id="cb24-65"><a href="#cb24-65" tabindex="-1"></a>  annual_sharp <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(<span class="fu">SharpeRatio.annualized</span>(<span class="at">R =</span> returns_xts_mat, <span class="at">scale =</span> <span class="dv">252</span>))</span>
+<span id="cb24-66"><a href="#cb24-66" tabindex="-1"></a>  <span class="fu">names</span>(annual_sharp) <span class="ot">&lt;-</span> <span class="fu">colnames</span>(returns_xts_mat)</span>
+<span id="cb24-67"><a href="#cb24-67" tabindex="-1"></a>  </span>
+<span id="cb24-68"><a href="#cb24-68" tabindex="-1"></a>  window_result_returns <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(<span class="fu">t</span>(annual_returns))</span>
+<span id="cb24-69"><a href="#cb24-69" tabindex="-1"></a>  window_result_returns<span class="sc">$</span>Window <span class="ot">&lt;-</span> window_index</span>
+<span id="cb24-70"><a href="#cb24-70" tabindex="-1"></a>  rolling_annual_expected_returns <span class="ot">&lt;-</span> <span class="fu">rbind</span>(rolling_annual_expected_returns, window_result_returns)</span>
+<span id="cb24-71"><a href="#cb24-71" tabindex="-1"></a>  </span>
+<span id="cb24-72"><a href="#cb24-72" tabindex="-1"></a>  window_result_sharpe <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(<span class="fu">t</span>(annual_sharp))</span>
+<span id="cb24-73"><a href="#cb24-73" tabindex="-1"></a>  window_result_sharpe<span class="sc">$</span>Window <span class="ot">&lt;-</span> window_index</span>
+<span id="cb24-74"><a href="#cb24-74" tabindex="-1"></a>  rolling_annual_sharpe_ratios <span class="ot">&lt;-</span> <span class="fu">rbind</span>(rolling_annual_sharpe_ratios, window_result_sharpe)</span>
+<span id="cb24-75"><a href="#cb24-75" tabindex="-1"></a>  </span>
+<span id="cb24-76"><a href="#cb24-76" tabindex="-1"></a>  window_result_vols <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(<span class="fu">t</span>(annual_vols))</span>
+<span id="cb24-77"><a href="#cb24-77" tabindex="-1"></a>  window_result_vols<span class="sc">$</span>Window <span class="ot">&lt;-</span> window_index</span>
+<span id="cb24-78"><a href="#cb24-78" tabindex="-1"></a>  rolling_annual_volatilities <span class="ot">&lt;-</span> <span class="fu">rbind</span>(rolling_annual_volatilities, window_result_vols)</span>
+<span id="cb24-79"><a href="#cb24-79" tabindex="-1"></a>  </span>
+<span id="cb24-80"><a href="#cb24-80" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;Completed window&quot;</span>, window_index,</span>
+<span id="cb24-81"><a href="#cb24-81" tabindex="-1"></a>      <span class="st">&quot;: Training rows [&quot;</span>, train_start, <span class="st">&quot;to&quot;</span>, train_end, </span>
+<span id="cb24-82"><a href="#cb24-82" tabindex="-1"></a>      <span class="st">&quot;] (Dates:&quot;</span>, <span class="fu">format</span>(train_data<span class="sc">$</span>Date[<span class="dv">1</span>], <span class="st">&quot;%Y-%m-%d&quot;</span>), </span>
+<span id="cb24-83"><a href="#cb24-83" tabindex="-1"></a>      <span class="st">&quot;to&quot;</span>, <span class="fu">format</span>(train_data<span class="sc">$</span>Date[<span class="fu">nrow</span>(train_data)], <span class="st">&quot;%Y-%m-%d&quot;</span>), </span>
+<span id="cb24-84"><a href="#cb24-84" tabindex="-1"></a>      <span class="st">&quot;), Testing rows [&quot;</span>, test_start, <span class="st">&quot;to&quot;</span>, test_end, </span>
+<span id="cb24-85"><a href="#cb24-85" tabindex="-1"></a>      <span class="st">&quot;] (Dates:&quot;</span>, <span class="fu">format</span>(test_data<span class="sc">$</span>Date[<span class="dv">1</span>], <span class="st">&quot;%Y-%m-%d&quot;</span>), </span>
+<span id="cb24-86"><a href="#cb24-86" tabindex="-1"></a>      <span class="st">&quot;to&quot;</span>, <span class="fu">format</span>(test_data<span class="sc">$</span>Date[<span class="fu">nrow</span>(test_data)], <span class="st">&quot;%Y-%m-%d&quot;</span>), <span class="st">&quot;)</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb24-87"><a href="#cb24-87" tabindex="-1"></a>}</span></code></pre></div>
+<hr />
+</div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
