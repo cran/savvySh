@@ -1,8 +1,8 @@
 ---
-title: "savvySh: Shrinkage Methods for Linear Regression Estimation"
+title: "`savvySh`: Shrinkage Methods for Linear Regression Estimation"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{savvySh: Shrinkage Methods for Linear Regression Estimation}
+  %\VignetteIndexEntry{`savvySh`: Shrinkage Methods for Linear Regression Estimation}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -966,4 +966,3 @@ for (window_index in seq_len(max_windows)) {
 ```
 
 ------------------------------------------------------------------------
-                      

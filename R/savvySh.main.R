@@ -233,6 +233,7 @@ savvySh <- function(x, y, model_class = c("Multiplicative", "Slab", "Linear", "S
       optimal_lambda <- 0
     }
     Sigma_lambda <- t(x_tilde) %*% x_tilde + optimal_lambda * diag(ncol(x_tilde))
+    Sigma_lambda <- (Sigma_lambda + t(Sigma_lambda)) / 2
     Sigma_lambda_inv <- pd.solve(Sigma_lambda)
 
     if (model_class == "Multiplicative") {
@@ -292,6 +293,7 @@ savvySh <- function(x, y, model_class = c("Multiplicative", "Slab", "Linear", "S
       optimal_lambda <- 0
     }
     Sigma_lambda <- t(centered_x) %*% centered_x + optimal_lambda * diag(ncol(centered_x))
+    Sigma_lambda <- (Sigma_lambda + t(Sigma_lambda)) / 2
     Sigma_lambda_inv <- pd.solve(Sigma_lambda)
     Sigma_tilde <- diag(diag(Sigma_lambda))
 

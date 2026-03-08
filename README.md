@@ -1,4 +1,4 @@
-# savvySh: Shrinkage Methods for Linear Regression Estimation
+# `savvySh`: Shrinkage Methods for Linear Regression Estimation
 
 The `savvySh` package provides a unified interface for fitting shrinkage estimators in linear regression, which is particularly useful in the presence of multicollinearity or high-dimensional covariates. It supports four shrinkage classes: Multiplicative Shrinkage, Slab Regression, Linear Shrinkage, and Shrinkage Ridge Regression. These methods improve on the classical Ordinary Least Squares (OLS) estimator by trading a small amount of bias for a significant reduction in variance.
 
@@ -8,8 +8,8 @@ Asimit, V., Cidota, M. A., Chen, Z., & Asimit, J. (2025). [Slab and Shrinkage Li
 
 ## Related Projects
 
--   **savvyGLM**: For applying these shrinkage methods within Generalized Linear Models (GLMs), please refer to the companion package [savvyGLM](https://github.com/Ziwei-ChenChen/savvyGLM).
--   **flashfm-savvySh**: For applications in genetic fine-mapping, see the [flashfm-savvySh](https://github.com/jennasimit/flashfm-savvySh) repository.
+-   **`savvyGLM`**: For applying these shrinkage methods within Generalized Linear Models (GLMs), please refer to the companion package [`savvyGLM`](https://github.com/Ziwei-ChenChen/savvyGLM).
+-   **`flashfm-savvySh`**: For applications in genetic fine-mapping, see the [`flashfm-savvySh`](https://github.com/jennasimit/flashfm-savvySh) repository.
 
 ## Installation Guide
 
